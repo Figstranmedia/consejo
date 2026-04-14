@@ -1,0 +1,3284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONSEJO</title>
+<style>
+  /* ── Reset & base ───────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Paleta renacentista — extraída del logo CONSEJO */
+    --bg:         #0c0806;   /* negro cálido, terciopelo oscuro   */
+    --bg2:        #130d0a;   /* borgoña muy oscuro                */
+    --bg3:        #1c1410;   /* caoba                             */
+    --border:     #2e2018;   /* borde tierra                      */
+    --border2:    #3e2e20;   /* borde activo                      */
+    --text:       #ddd4c4;   /* pergamino                         */
+    --text2:      #8a7e70;   /* gris pardo                        */
+    --text3:      #4a4038;   /* sombra cálida                     */
+    --accent:     #4e6272;   /* azul-gris acero (diamante logo)   */
+    --accent2:    #6a8292;   /* acero claro                       */
+    --gold:       #c4983a;   /* oro florentino                    */
+    --gold2:      #e0b84a;   /* oro claro                         */
+    --terra:      #b5603a;   /* terracota (fondo logo)            */
+    --burgundy:   #7a2028;   /* borgoña (fondo logo)              */
+    --green:      #5a8a5a;   /* verde musgo sobrio                */
+    --red:        #9a3030;   /* rojo oscuro                       */
+    --cream:      #f0e8d8;   /* crema marfil                      */
+    --sidebar-w:  268px;
+    --radius:     6px;
+    --font:       'Palatino Linotype', Palatino, 'Book Antiqua', 'SF Pro Display', Georgia, serif;
+    --font-ui:    'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:       'SF Mono', 'Fira Code', monospace;
+    --mono:       'SF Mono', 'Fira Code', monospace;
+  }
+
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 13px; }
+
+  /* ── Ornamental divider ─────────────────────────────────────────────── */
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text3);
+    font-size: 11px;
+    letter-spacing: .15em;
+  }
+  .ornament::before, .ornament::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border2), transparent);
+  }
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  #app { display: flex; height: 100vh; }
+
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width .2s ease, min-width .2s ease;
+  }
+  #sidebar.collapsed { width: 0; min-width: 0; }
+
+  .sidebar-header {
+    padding: 18px 14px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg, #1a0e0a 0%, var(--bg2) 100%);
+  }
+  .sidebar-logo-img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    opacity: .92;
+    filter: drop-shadow(0 2px 8px rgba(196,152,58,.25));
+  }
+  .sidebar-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .22em;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-family: var(--font);
+  }
+  .sidebar-logo span { color: var(--text2); font-weight: 400; letter-spacing: .1em; }
+
+  .sidebar-section { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .sidebar-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: .7;
+    padding: 0 14px 6px;
+    font-family: var(--font-ui);
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 12.5px;
+    border-radius: 0;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar-item:hover { background: var(--bg3); color: var(--text); }
+  .sidebar-item.active { background: var(--bg3); color: var(--text); }
+  .sidebar-item .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sidebar-item .icon { font-size: 14px; flex-shrink: 0; }
+
+  .sidebar-new-btn {
+    margin: 10px 10px 4px;
+    padding: 8px 10px;
+    background: linear-gradient(135deg, #3a1a10 0%, #2a1418 100%);
+    color: var(--gold);
+    border: 1px solid #4e2a18;
+    border-radius: var(--radius);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    transition: all .18s;
+    width: calc(100% - 20px);
+    font-family: var(--font-ui);
+  }
+  .sidebar-new-btn:hover {
+    background: linear-gradient(135deg, #4e2a18 0%, #3a1a24 100%);
+    border-color: var(--gold);
+    color: var(--gold2);
+  }
+
+  /* ── Main area ───────────────────────────────────────────────────────── */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Topbar ──────────────────────────────────────────────────────────── */
+  #topbar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #1a0e0a 0%, var(--bg2) 100%);
+    flex-shrink: 0;
+  }
+  #topbar-toggle {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  #topbar-toggle:hover { color: var(--text); }
+
+  #panel-select-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
+  #panel-select-wrap label { font-size: 11px; color: var(--text2); white-space: nowrap; }
+
+  select, input[type="text"], textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-family: var(--font-ui);
+    font-size: 12.5px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--gold); }
+  select { cursor: pointer; }
+
+  #mode-select { width: 130px; }
+  #model-select { width: 170px; }
+
+  .topbar-sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+
+  /* ── Content ─────────────────────────────────────────────────────────── */
+  #content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Session setup ───────────────────────────────────────────────────── */
+  #setup-area {
+    padding: 20px 24px 0;
+    flex-shrink: 0;
+  }
+  #topic-wrap { display: flex; gap: 10px; align-items: flex-start; }
+  #topic-input {
+    flex: 1;
+    resize: none;
+    height: 68px;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 8px 10px;
+  }
+  #start-btn {
+    padding: 0 22px;
+    height: 68px;
+    background: linear-gradient(160deg, #3a2810 0%, #2a1820 100%);
+    color: var(--gold);
+    border: 1px solid #5a3820;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    transition: all .18s;
+    white-space: nowrap;
+    font-family: var(--font-ui);
+  }
+  #start-btn:hover {
+    background: linear-gradient(160deg, #4e3818 0%, #3a1a28 100%);
+    border-color: var(--gold);
+    color: var(--gold2);
+  }
+  #start-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Agents preview ──────────────────────────────────────────────────── */
+  #agents-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 24px 0;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .agent-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    font-size: 11.5px;
+    color: var(--text2);
+  }
+  .agent-pill .agent-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  /* ── Debate area ─────────────────────────────────────────────────────── */
+  #debate-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #debate-area::-webkit-scrollbar { width: 5px; }
+  #debate-area::-webkit-scrollbar-track { background: transparent; }
+  #debate-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Round header */
+  .round-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .round-header .round-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: .6;
+    white-space: nowrap;
+    font-family: var(--font-ui);
+  }
+  .round-header .round-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border2), transparent);
+  }
+
+  /* Agent card */
+  .agent-card {
+    background: linear-gradient(160deg, var(--bg2) 0%, var(--bg3) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .agent-card.active { border-color: var(--gold); box-shadow: 0 0 12px rgba(196,152,58,.08); }
+
+  .agent-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .agent-card-header .agent-color-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .agent-card-header .agent-name {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .agent-card-header .agent-emoji { font-size: 13px; }
+  .agent-card-header {
+    cursor: pointer;
+    user-select: none;
+  }
+  .agent-card-header:hover { background: rgba(255,255,255,.03); }
+  .agent-card-header .expand-chevron {
+    margin-left: auto;
+    color: var(--text3);
+    font-size: 10px;
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+  .agent-card.collapsed .agent-card-header .expand-chevron { transform: rotate(-90deg); }
+  .agent-card.collapsed .agent-card-body,
+  .agent-card.collapsed .agent-thinking-block,
+  .agent-card.collapsed .card-footer { display: none; }
+  .agent-card-header .thinking-indicator {
+    margin-left: auto;
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+  .thinking-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .thinking-dot:nth-child(2) { animation-delay: .2s; }
+  .thinking-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse {
+    0%, 100% { opacity: .3; transform: scale(.8); }
+    50%       { opacity: 1;  transform: scale(1.2); }
+  }
+
+  .agent-card-body {
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+    min-height: 24px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Search indicator */
+  .search-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    font-style: italic;
+  }
+
+  /* Status messages */
+  .status-msg {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text3);
+    padding: 8px 0;
+    letter-spacing: .04em;
+  }
+
+  /* Consensus card */
+  .consensus-card {
+    background: linear-gradient(135deg, #1a1208 0%, #120e08 100%);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: 0 0 24px rgba(196,152,58,.1);
+  }
+  .consensus-card .consensus-title {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-family: var(--font-ui);
+  }
+  .consensus-card .consensus-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--cream);
+    font-family: var(--font);
+    font-style: italic;
+  }
+  .consensus-card .consensus-meta {
+    margin-top: 10px;
+    font-size: 10.5px;
+    color: var(--text3);
+    font-family: var(--font-ui);
+  }
+
+  /* No consensus */
+  .no-consensus-card {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    text-align: center;
+    color: var(--text2);
+    font-size: 12.5px;
+  }
+
+  /* Saved indicator */
+  .saved-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 6px 0;
+  }
+  .saved-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* ── Empty state ─────────────────────────────────────────────────────── */
+  #empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    color: var(--text3);
+  }
+  #empty-state .empty-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    opacity: .28;
+    filter: sepia(1) saturate(.6) brightness(1.2);
+  }
+  #empty-state .empty-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text2);
+    font-family: var(--font);
+    letter-spacing: .08em;
+  }
+  #empty-state .empty-sub { font-size: 12px; letter-spacing: .04em; color: var(--text3); }
+
+  /* ── Modales ─────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 24px;
+    width: 520px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(12px);
+    transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal h2 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .modal-field input[type="text"],
+  .modal-field select,
+  .modal-field textarea { width: 100%; }
+  .modal-field textarea { height: 80px; resize: vertical; }
+  .modal-field .hint { font-size: 10.5px; color: var(--text3); margin-top: 4px; }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background .15s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #3a2810 0%, #2a1820 100%);
+    color: var(--gold);
+    border: 1px solid #5a3820;
+  }
+  .btn-primary:hover { border-color: var(--gold); color: var(--gold2); }
+  .btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn-danger { background: var(--red); color: #fff; }
+
+  /* Panel builder agents list */
+  .agent-editor-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .agent-editor-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .agent-editor-item .full-col { grid-column: 1 / -1; }
+  .agent-editor-item input,
+  .agent-editor-item textarea { font-size: 12px; }
+  .agent-color-swatch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .agent-color-swatch input[type="color"] {
+    width: 32px;
+    height: 28px;
+    padding: 1px 2px;
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    background: var(--bg3);
+    cursor: pointer;
+  }
+  .remove-agent-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: auto;
+  }
+  .remove-agent-btn:hover { color: var(--red); }
+
+  /* ── Scrollbar global ────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Obsidian badge ──────────────────────────────────────────────────── */
+  .obsidian-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    color: var(--gold);
+    background: rgba(196,152,58,.08);
+    border: 1px solid rgba(196,152,58,.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    letter-spacing: .06em;
+    font-family: var(--font-ui);
+  }
+
+  /* ── Mode badge ──────────────────────────────────────────────────────── */
+  .mode-badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg3);
+    color: var(--text3);
+    border: 1px solid var(--border);
+    font-family: var(--font-ui);
+  }
+
+  /* ── Saved indicator ─────────────────────────────────────────────────── */
+  .saved-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 10.5px;
+    color: var(--text3);
+    padding: 6px 0;
+    letter-spacing: .06em;
+    font-family: var(--font-ui);
+  }
+  .saved-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: .7; }
+
+  /* ── Auto-agents button ──────────────────────────────────────────────── */
+  #auto-agents-btn {
+    padding: 0 12px;
+    height: 29px;
+    background: linear-gradient(135deg, #1a1208 0%, #18100e 100%);
+    color: var(--gold);
+    border: 1px solid #3e2818;
+    border-radius: var(--radius);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .08em;
+    transition: all .18s;
+    white-space: nowrap;
+    font-family: var(--font-ui);
+  }
+  #auto-agents-btn:hover { border-color: var(--gold); color: var(--gold2); }
+  #auto-agents-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Topbar icon button ──────────────────────────────────────────────── */
+  .topbar-icon-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .topbar-icon-btn:hover { color: var(--gold); }
+  .topbar-icon-btn.active { color: var(--gold); }
+
+  /* ── Graph panel ─────────────────────────────────────────────────────── */
+  #graph-panel {
+    width: 0;
+    min-width: 0;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width .25s ease, min-width .25s ease;
+    flex-shrink: 0;
+  }
+  #graph-panel.open {
+    width: 320px;
+    min-width: 320px;
+  }
+  .graph-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .graph-title {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: .7;
+    font-family: var(--font-ui);
+  }
+  .graph-close {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+  }
+  .graph-close:hover { color: var(--text2); }
+
+  #graph-canvas {
+    flex: 1;
+    width: 100%;
+    display: block;
+  }
+  #graph-legend {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--font-ui);
+  }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ── Round assessment toast ──────────────────────────────────────────── */
+  .round-assessment {
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--text3);
+    font-style: italic;
+    padding: 4px 0;
+    font-family: var(--font-ui);
+  }
+
+  /* ── Modal Ayuda ─────────────────────────────────────────────────────── */
+  #search-modal .modal, #license-modal .modal { width: 480px; }
+  .search-input-wrap { display: flex; gap: 6px; }
+  .search-input-wrap input { flex: 1; }
+  #search-results { margin-top: 12px; max-height: 260px; overflow-y: auto; }
+  .search-result-item {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .search-result-item:hover { background: var(--bg3); }
+  .search-result-topic { font-size: 12.5px; color: var(--text); }
+  .search-result-meta { font-size: 10.5px; color: var(--text3); margin-top: 2px; }
+
+  /* ── Min/Max rounds display ──────────────────────────────────────────── */
+  .rounds-range {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text3);
+    margin-left: auto;
+    font-family: var(--font-ui);
+  }
+
+  /* ── Agent card: expandable + thinking ──────────────────────────────── */
+  .agent-card-body.truncated {
+    max-height: 5.8em;
+    overflow: hidden;
+    position: relative;
+  }
+  .agent-card-body.truncated::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 28px;
+    background: linear-gradient(transparent, #130d0a);
+    pointer-events: none;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px 8px;
+    flex-wrap: wrap;
+  }
+  .card-btn {
+    background: none;
+    border: none;
+    font-size: 10.5px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: var(--font-ui);
+    transition: color .15s, background .15s;
+    letter-spacing: .03em;
+  }
+  .card-btn:hover { color: var(--gold); background: rgba(196,152,58,.07); }
+  .agent-thinking-block {
+    background: rgba(0,0,0,.22);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px 10px;
+    font-size: 11px;
+    color: var(--accent2);
+    font-family: var(--mono);
+    white-space: pre-wrap;
+    max-height: 180px;
+    overflow-y: auto;
+    line-height: 1.5;
+    display: none;
+  }
+  .agent-thinking-block.visible { display: block; }
+  .thinking-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 5px;
+    font-family: var(--font-ui);
+  }
+
+  /* ── Resize handles ──────────────────────────────────────────────────── */
+  .resize-handle {
+    width: 4px;
+    cursor: col-resize;
+    flex-shrink: 0;
+    background: transparent;
+    transition: background .15s;
+    position: relative;
+    z-index: 10;
+  }
+  .resize-handle:hover, .resize-handle.active { background: rgba(196,152,58,.38); }
+
+  /* ── Graph node detail ───────────────────────────────────────────────── */
+  #graph-panel { position: relative; }
+  #graph-detail {
+    position: absolute;
+    bottom: 50px;
+    left: 8px;
+    right: 8px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11.5px;
+    z-index: 20;
+    box-shadow: 0 4px 20px rgba(0,0,0,.6);
+    display: none;
+  }
+  #graph-detail.visible { display: block; }
+  #graph-detail .detail-label { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  #graph-detail .detail-meta  { font-size: 10.5px; color: var(--text3); line-height: 1.7; }
+  .graph-zoom-controls {
+    position: absolute;
+    top: 48px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    z-index: 10;
+  }
+  .graph-zoom-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: color .15s, border-color .15s;
+    font-family: var(--font-ui);
+  }
+  .graph-zoom-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* ── Debate templates ────────────────────────────────────────────────── */
+  .template-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 11.5px;
+    transition: background .15s, color .15s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .template-item:hover { background: var(--bg3); color: var(--text); }
+  .template-icon { flex-shrink: 0; font-size: 12px; }
+
+  /* ── Export PDF button ───────────────────────────────────────────────── */
+  .export-pdf-btn {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: rgba(196,152,58,.07);
+    border: 1px solid rgba(196,152,58,.25);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--gold);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    letter-spacing: .05em;
+    transition: all .15s;
+  }
+  .export-pdf-btn:hover { background: rgba(196,152,58,.14); border-color: var(--gold); }
+
+  /* ── Docs sidebar ────────────────────────────────────────────────────── */
+  .docs-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    font-size: 11px;
+    color: var(--text3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .docs-item .doc-icon { flex-shrink: 0; font-size: 11px; }
+  .docs-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--accent2);
+    background: rgba(78,98,114,.1);
+    border: 1px solid rgba(78,98,114,.25);
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: .05em;
+    font-family: var(--font-ui);
+  }
+  .docs-choose-btn {
+    margin: 6px 10px 4px;
+    padding: 6px 10px;
+    background: rgba(78,98,114,.08);
+    color: var(--accent2);
+    border: 1px solid rgba(78,98,114,.25);
+    border-radius: var(--radius);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    transition: all .18s;
+    width: calc(100% - 20px);
+    font-family: var(--font-ui);
+  }
+  .docs-choose-btn:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(78,98,114,.15); }
+
+  /* ── Citation indicator ──────────────────────────────────────────────── */
+  .citation-indicator {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--accent2);
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    font-style: normal;
+  }
+  .citation-indicator .cite-domain {
+    font-weight: 600;
+    letter-spacing: .03em;
+  }
+  .citation-indicator .cite-snippet {
+    color: var(--text3);
+    font-size: 10.5px;
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <img src="/assets/logo.png" class="sidebar-logo-img" alt="CONSEJO">
+      <div class="sidebar-logo">CONSEJO</div>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="sidebar-new-btn" onclick="consejo.newSession()">+ Nueva sesión</button>
+      <button class="sidebar-new-btn" onclick="consejo.newWorkspace()"
+              style="margin-top:5px;background:rgba(78,98,114,.1);color:var(--accent2);border-color:rgba(78,98,114,.3)"
+              title="Reinicia el espacio sin eliminar sesiones guardadas">↺ Nuevo espacio</button>
+    </div>
+
+    <!-- Paneles -->
+    <div class="sidebar-section" style="flex-shrink:0">
+      <div class="sidebar-label">Paneles</div>
+      <div id="panels-list"></div>
+      <div class="sidebar-item" style="color:var(--text3);font-size:11.5px" onclick="consejo.showPanelBuilder()">
+        <span class="icon">+</span> Nuevo panel
+      </div>
+    </div>
+
+    <!-- Plantillas -->
+    <div class="sidebar-section" style="flex-shrink:0">
+      <div class="sidebar-label">Plantillas</div>
+      <div id="templates-list"></div>
+    </div>
+
+    <!-- Sesiones recientes -->
+    <div class="sidebar-section" style="flex:1;overflow-y:auto;min-height:60px">
+      <div class="sidebar-label">Recientes</div>
+      <div id="sessions-list"></div>
+    </div>
+
+    <!-- Documentos de contexto — sección compacta al fondo -->
+    <div class="sidebar-section" style="flex-shrink:0;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 14px 4px">
+        <div class="sidebar-label" style="padding:0">Documentos</div>
+        <div id="docs-status-sidebar" style="font-size:9.5px;color:var(--accent2)"></div>
+      </div>
+      <div id="docs-list">
+        <div class="docs-item">Sin carpeta configurada</div>
+      </div>
+      <button class="docs-choose-btn" onclick="consejo.chooseDocsFolder()">📂 Elegir carpeta</button>
+    </div>
+  </div>
+
+  <div class="resize-handle" id="resize-sidebar"></div>
+
+  <!-- ── Main ────────────────────────────────────────────────────────── -->
+  <div id="main">
+
+    <!-- Topbar -->
+    <div id="topbar">
+      <button id="topbar-toggle" onclick="consejo.toggleSidebar()" title="Sidebar">☰</button>
+      <div class="topbar-sep"></div>
+
+      <div id="panel-select-wrap">
+        <label>Panel</label>
+        <select id="panel-select" onchange="consejo.onPanelChange()"></select>
+      </div>
+
+      <div class="topbar-sep"></div>
+
+      <label style="font-size:11px;color:var(--text2)">Modo</label>
+      <select id="mode-select">
+        <option value="debate">Debate</option>
+        <option value="oracle">Oráculo</option>
+        <option value="review">Revisión</option>
+        <option value="brainstorm">Tormenta</option>
+        <option value="synthesis">Síntesis</option>
+      </select>
+
+      <div class="topbar-sep"></div>
+
+      <label style="font-size:11px;color:var(--text2)">Modelo</label>
+      <select id="model-select"></select>
+
+      <div class="topbar-sep"></div>
+      <button id="graph-toggle-btn" class="topbar-icon-btn" onclick="consejo.toggleGraph()" title="Red de conocimiento">◈</button>
+      <div id="docs-status" style="font-size:11px;color:var(--text3)"></div>
+      <div id="obsidian-status" style="font-size:11px;color:var(--text3)"></div>
+    </div>
+
+    <!-- Content -->
+    <div id="content">
+      <!-- Setup -->
+      <div id="setup-area">
+        <div id="topic-wrap">
+          <textarea id="topic-input" placeholder="Escribe el tema, pregunta o contenido a deliberar…"></textarea>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button id="start-btn" onclick="consejo.startSession()">Iniciar ▶</button>
+            <button id="auto-agents-btn" onclick="consejo.autoConfigureAgents()" title="Sugerir agentes para este tema">✦ Sugerir panel</button>
+          </div>
+        </div>
+        <div id="agents-bar"></div>
+      </div>
+
+      <!-- Empty / Debate -->
+      <div id="debate-area">
+        <div id="empty-state">
+          <img src="/assets/logo.png" class="empty-logo" alt="">
+          <div class="empty-title">Convoca el consejo</div>
+          <div class="empty-sub">Elige un panel, selecciona el modo y escribe el tema</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="resize-handle" id="resize-graph"></div>
+
+  <!-- ── Panel: Grafo de conocimiento ──────────────────────────────────── -->
+  <div id="graph-panel">
+    <div class="graph-header">
+      <span class="graph-title">Red de conocimiento</span>
+      <button class="graph-close" onclick="consejo.toggleGraph()" title="Cerrar">✕</button>
+    </div>
+    <!-- Zoom controls -->
+    <div class="graph-zoom-controls">
+      <button class="graph-zoom-btn" onclick="consejo.graphZoomIn()" title="Acercar">+</button>
+      <button class="graph-zoom-btn" onclick="consejo.graphZoomOut()" title="Alejar">−</button>
+      <button class="graph-zoom-btn" onclick="consejo.graphResetView()" title="Restablecer" style="font-size:10px">⟳</button>
+    </div>
+    <canvas id="graph-canvas"></canvas>
+    <div id="graph-legend"></div>
+    <!-- Node detail popup -->
+    <div id="graph-detail">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px">
+        <div class="detail-label" id="gd-label"></div>
+        <button onclick="document.getElementById('graph-detail').classList.remove('visible')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;line-height:1;flex-shrink:0;margin-left:8px">✕</button>
+      </div>
+      <div class="detail-meta" id="gd-meta"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Preferencias ────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="prefs-modal">
+  <div class="modal">
+    <h2>Preferencias</h2>
+
+    <div class="modal-field">
+      <label>Carpeta de documentos de contexto</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="pref-docs-path" placeholder="/Users/nombre/mis-documentos" style="flex:1">
+        <button class="btn btn-ghost" onclick="consejo.chooseDocsFolder()">Elegir…</button>
+      </div>
+      <div class="hint">PDFs, Markdown y TXT que los agentes podrán consultar durante el debate. Usa [CITAR: nombre_doc] en tus prompts.</div>
+    </div>
+
+    <div class="modal-field" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+      <label>Vault de Obsidian</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="pref-vault" placeholder="/Users/nombre/ObsidianVault" style="flex:1">
+        <button class="btn btn-ghost" onclick="consejo.chooseVault()">Elegir…</button>
+      </div>
+      <div class="hint">Las deliberaciones se exportarán como notas con wikilinks y frontmatter.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Exportar automáticamente a Obsidian</label>
+      <select id="pref-auto-export">
+        <option value="true">Sí</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+
+    <div class="modal-field">
+      <label>Subfolder en el vault</label>
+      <input type="text" id="pref-subfolder" placeholder="CONSEJO">
+    </div>
+
+    <div class="modal-field">
+      <label>Modelo principal por defecto</label>
+      <select id="pref-model"></select>
+    </div>
+
+    <div class="modal-field">
+      <label>Modelo mediador</label>
+      <select id="pref-mediator-model"></select>
+    </div>
+
+    <div class="modal-field">
+      <label>Rondas máximas de debate</label>
+      <input type="text" id="pref-max-rounds" placeholder="8">
+    </div>
+
+    <div class="modal-field">
+      <label>Umbral de consenso (0.0 – 1.0)</label>
+      <input type="text" id="pref-threshold" placeholder="0.75">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="consejo.closeModal('prefs-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="consejo.savePreferences()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Propiedades ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="props-modal">
+  <div class="modal">
+    <h2>Propiedades de la sesión</h2>
+    <div id="props-content" style="font-size:12.5px;line-height:1.8;color:var(--text2)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="consejo.closeModal('props-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Permisos ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="perms-modal">
+  <div class="modal">
+    <h2>Permisos y accesos</h2>
+    <div id="perms-content" style="font-size:12.5px;line-height:1.9;color:var(--text2)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="consejo.closeModal('perms-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Panel Builder ───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="panel-modal">
+  <div class="modal" style="width:620px">
+    <h2 id="panel-modal-title">Nuevo panel</h2>
+
+    <div class="modal-field">
+      <label>Nombre del panel</label>
+      <input type="text" id="pb-name" placeholder="Panel Filosófico">
+    </div>
+    <div class="modal-field">
+      <label>Descripción</label>
+      <input type="text" id="pb-description" placeholder="Breve descripción del panel">
+    </div>
+
+    <div class="modal-field">
+      <label>Agentes <span style="color:var(--text3);font-weight:400;font-size:10px">(cada uno puede usar un modelo distinto)</span></label>
+      <div class="agent-editor-list" id="pb-agents-list"></div>
+      <button class="btn btn-ghost" style="font-size:12px;width:100%;margin-top:4px" onclick="consejo.addAgentToBuilder()">+ Agregar agente</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="consejo.closeModal('panel-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="consejo.savePanel()">Guardar panel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Buscar ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="search-modal">
+  <div class="modal" style="width:500px">
+    <h2>Buscar sesiones</h2>
+    <div class="search-input-wrap">
+      <input type="text" id="search-input" placeholder="Tema, panel, modo…" oninput="consejo.searchSessions()">
+    </div>
+    <div id="search-results"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="consejo.closeModal('search-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Licencia ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="license-modal">
+  <div class="modal" style="width:480px">
+    <h2>Licencia</h2>
+    <div style="font-size:12.5px;line-height:1.8;color:var(--text2)">
+      <p style="margin-bottom:12px"><strong style="color:var(--gold)">CONSEJO</strong> — Sistema de Deliberación Multi-Agente</p>
+      <p style="margin-bottom:8px">Versión 1.0 · Proyecto ARCA</p>
+      <p style="margin-bottom:8px">Desarrollado por Rafael Figueroa.</p>
+      <p style="margin-bottom:8px">Software de uso personal. Los modelos de lenguaje utilizados son propiedad de sus respectivos creadores (Google Gemma, Meta Llama, Mistral).</p>
+      <p style="color:var(--text3);font-size:11px">Este software no recopila datos ni requiere conexión a internet para funcionar (excepto búsquedas web opcionales vía DuckDuckGo).</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="consejo.closeModal('license-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSEJO — Frontend Controller
+// ═══════════════════════════════════════════════════════════════════════════
+
+const WS_URL = `ws://${location.host}/ws`;
+const AGENT_COLORS = ['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#f39c12','#e91e63'];
+const MODE_LABELS = { debate:'Debate', oracle:'Oráculo', review:'Revisión', brainstorm:'Tormenta', synthesis:'Síntesis' };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KNOWLEDGE GRAPH — Canvas force-directed renderer
+// ═══════════════════════════════════════════════════════════════════════════
+class KnowledgeGraph {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx    = canvas.getContext('2d');
+    this.nodes  = new Map();
+    this.edges  = [];
+    this.pos    = new Map();
+    this.raf    = null;
+    this.agentColors = {};
+    this.hover    = null;
+    this.selected = null;
+    // Pan / zoom transform
+    this.tx = 0; this.ty = 0; this.scale = 1;
+    // Interaction state
+    this.dragging   = null;
+    this.dragOffX   = 0; this.dragOffY = 0;
+    this.panning    = false;
+    this.panStartX  = 0; this.panStartY = 0;
+    this._wasDragged = false;
+    this._bindEvents();
+  }
+
+  // ── Coordinate helpers ───────────────────────────────────────────────
+  _world(mx, my) {
+    return { x: (mx - this.tx) / this.scale, y: (my - this.ty) / this.scale };
+  }
+
+  _hitNode(wx, wy) {
+    let found = null;
+    this.pos.forEach((p, id) => {
+      if (Math.hypot(p.x - wx, p.y - wy) < 24) found = id;
+    });
+    return found;
+  }
+
+  setAgentColors(agents) {
+    agents.forEach(a => { this.agentColors[a.id] = a.color; });
+    this.agentColors['consenso'] = '#c4983a';
+  }
+
+  addNodes(nodes) {
+    const cx = this.canvas.width / 2, cy = this.canvas.height / 2;
+    nodes.forEach(n => {
+      if (!this.nodes.has(n.id)) {
+        this.nodes.set(n.id, n);
+        this.pos.set(n.id, {
+          x: cx + (Math.random() - .5) * 120,
+          y: cy + (Math.random() - .5) * 120,
+          vx: 0, vy: 0, fixed: false
+        });
+      }
+    });
+    this._start();
+  }
+
+  addEdges(edges) {
+    edges.forEach(e => {
+      if (!this.edges.find(x => x.from === e.from && x.to === e.to))
+        this.edges.push(e);
+    });
+  }
+
+  _bindEvents() {
+    const c = this.canvas;
+
+    c.addEventListener('mousedown', e => {
+      const r = c.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const {x: wx, y: wy} = this._world(mx, my);
+      const hit = this._hitNode(wx, wy);
+      this._wasDragged = false;
+
+      if (hit) {
+        this.dragging = hit;
+        const p = this.pos.get(hit);
+        this.dragOffX = p.x - wx;
+        this.dragOffY = p.y - wy;
+        p.fixed = true;
+      } else {
+        this.panning = true;
+        this.panStartX = e.clientX - this.tx;
+        this.panStartY = e.clientY - this.ty;
+      }
+      e.preventDefault();
+    });
+
+    c.addEventListener('mousemove', e => {
+      const r = c.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const {x: wx, y: wy} = this._world(mx, my);
+
+      if (this.dragging) {
+        this._wasDragged = true;
+        const p = this.pos.get(this.dragging);
+        if (p) { p.x = wx + this.dragOffX; p.y = wy + this.dragOffY; p.vx = 0; p.vy = 0; }
+      } else if (this.panning) {
+        this._wasDragged = true;
+        this.tx = e.clientX - this.panStartX;
+        this.ty = e.clientY - this.panStartY;
+      }
+
+      this.hover = this._hitNode(wx, wy);
+    });
+
+    const stopDrag = () => {
+      if (this.dragging) {
+        const p = this.pos.get(this.dragging);
+        if (p) p.fixed = false;
+        this.dragging = null;
+      }
+      this.panning = false;
+    };
+
+    c.addEventListener('mouseup', e => {
+      if (!this._wasDragged) {
+        const r = c.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        const {x: wx, y: wy} = this._world(mx, my);
+        const hit = this._hitNode(wx, wy);
+        if (hit) {
+          this.selected = hit === this.selected ? null : hit;
+          if (this.selected) this._showNodeDetail(hit);
+          else {
+            const d = document.getElementById('graph-detail');
+            if (d) d.classList.remove('visible');
+          }
+        } else {
+          this.selected = null;
+          const d = document.getElementById('graph-detail');
+          if (d) d.classList.remove('visible');
+        }
+      }
+      stopDrag();
+    });
+
+    c.addEventListener('mouseleave', () => { this.hover = null; stopDrag(); });
+
+    c.addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = c.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const factor = e.deltaY < 0 ? 1.12 : 0.89;
+      const newScale = Math.max(0.15, Math.min(5, this.scale * factor));
+      // Zoom toward cursor position
+      this.tx = mx - (mx - this.tx) * (newScale / this.scale);
+      this.ty = my - (my - this.ty) * (newScale / this.scale);
+      this.scale = newScale;
+    }, { passive: false });
+  }
+
+  _showNodeDetail(id) {
+    const node = this.nodes.get(id);
+    const detail = document.getElementById('graph-detail');
+    if (!node || !detail) return;
+    const color = this.agentColors[node.agent] || '#c4983a';
+    const connected = this.edges
+      .filter(e => e.from === id || e.to === id)
+      .map(e => {
+        const otherId = e.from === id ? e.to : e.from;
+        const other = this.nodes.get(otherId);
+        return other
+          ? `<span style="color:${this.agentColors[other.agent]||'#c4983a'}">${other.label}</span>${e.label ? ` <em style="color:var(--text3)">[${e.label}]</em>` : ''}`
+          : null;
+      }).filter(Boolean);
+    document.getElementById('gd-label').textContent = node.label || id;
+    document.getElementById('gd-meta').innerHTML =
+      `<span style="color:${color}">● ${node.agent||''}</span> · <em>${node.type||''}</em>`+
+      (connected.length ? `<br><span style="color:var(--text3)">Conexiones:</span> ${connected.join(', ')}` : '');
+    detail.classList.add('visible');
+  }
+
+  zoomIn()  { this.scale = Math.min(5, this.scale * 1.25); }
+  zoomOut() { this.scale = Math.max(0.15, this.scale / 1.25); }
+  resetView() {
+    this.tx = 0; this.ty = 0; this.scale = 1;
+    const cx = this.canvas.width / 2, cy = this.canvas.height / 2;
+    this.pos.forEach(p => { p.vx += (cx - p.x) * 0.06; p.vy += (cy - p.y) * 0.06; });
+  }
+
+  _tick() {
+    const ids = [...this.nodes.keys()];
+    const K_REPEL = 5000, K_SPRING = 0.04, TARGET = 130, DAMP = 0.82;
+    const cx = this.canvas.width / 2, cy = this.canvas.height / 2;
+
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = this.pos.get(ids[i]), b = this.pos.get(ids[j]);
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const d2 = dx*dx + dy*dy || 1, d = Math.sqrt(d2);
+        const f = K_REPEL / d2;
+        if (!a.fixed) { a.vx -= (dx/d)*f; a.vy -= (dy/d)*f; }
+        if (!b.fixed) { b.vx += (dx/d)*f; b.vy += (dy/d)*f; }
+      }
+    }
+
+    this.edges.forEach(e => {
+      const a = this.pos.get(e.from), b = this.pos.get(e.to);
+      if (!a || !b) return;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx*dx + dy*dy) || 1;
+      const f = (d - TARGET) * K_SPRING;
+      if (!a.fixed) { a.vx += (dx/d)*f; a.vy += (dy/d)*f; }
+      if (!b.fixed) { b.vx -= (dx/d)*f; b.vy -= (dy/d)*f; }
+    });
+
+    ids.forEach(id => {
+      const p = this.pos.get(id);
+      if (p.fixed) return;
+      p.vx += (cx - p.x) * 0.008;
+      p.vy += (cy - p.y) * 0.008;
+      p.vx *= DAMP; p.vy *= DAMP;
+      p.x += p.vx; p.y += p.vy;
+    });
+  }
+
+  _draw() {
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.save();
+    ctx.translate(this.tx, this.ty);
+    ctx.scale(this.scale, this.scale);
+
+    // Edges
+    this.edges.forEach(e => {
+      const a = this.pos.get(e.from), b = this.pos.get(e.to);
+      if (!a || !b) return;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = '#3e2e20'; ctx.lineWidth = 1;
+      ctx.stroke();
+      const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+      ctx.fillStyle = '#5a4a38'; ctx.font = '8.5px -apple-system';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(e.label || '', mx, my - 6);
+    });
+
+    // Nodes
+    this.nodes.forEach((node, id) => {
+      const p = this.pos.get(id);
+      if (!p) return;
+      const color = this.agentColors[node.agent] || '#c4983a';
+      const r = 22;
+      const isHover = this.hover === id;
+      const isSel   = this.selected === id;
+
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+      ctx.fillStyle = '#1c1410'; ctx.fill();
+
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = isSel ? 16 : (isHover ? 10 : 0);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = (isSel || isHover) ? 2.5 : 1.5;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const typeColors = { solution:'#c4983a', consensus:'#c4983a', claim:color, fact:'#6a8292', problem:'#9a3030', question:'#9b59b6' };
+      ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+      ctx.fillStyle = typeColors[node.type] || color; ctx.fill();
+
+      ctx.fillStyle = (isHover || isSel) ? '#f0e8d8' : '#c8c0b0';
+      ctx.font = `${(isHover || isSel) ? 'bold ' : ''}9.5px -apple-system`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const words = (node.label || '').split(' ');
+      const lines = [], line = [];
+      words.forEach(w => {
+        if (ctx.measureText([...line, w].join(' ')).width < 40) line.push(w);
+        else { if (line.length) lines.push(line.splice(0).join(' ')); line.push(w); }
+      });
+      if (line.length) lines.push(line.join(' '));
+      const startY = p.y + r + 5;
+      lines.slice(0, 3).forEach((l, i) => ctx.fillText(l, p.x, startY + i * 11));
+    });
+
+    ctx.restore();
+  }
+
+  _start() {
+    if (this.raf) return;
+    const loop = () => {
+      this._tick();
+      this._draw();
+      this.raf = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+
+  clear() {
+    this.nodes.clear(); this.edges = []; this.pos.clear();
+    this.selected = null; this.hover = null;
+    this.tx = 0; this.ty = 0; this.scale = 1;
+    if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const d = document.getElementById('graph-detail');
+    if (d) d.classList.remove('visible');
+  }
+
+  resize() {
+    const panel = this.canvas.parentElement;
+    if (!panel) return;
+    this.canvas.width  = panel.clientWidth;
+    this.canvas.height = panel.clientHeight - 80;
+  }
+
+  getImageDataURL() {
+    return this.canvas.toDataURL('image/png');
+  }
+
+  // ── Print-quality export renderer ────────────────────────────────────────
+  getExportImageDataURL(W = 1600, H = 960) {
+    if (this.nodes.size === 0) return null;
+
+    const oc  = document.createElement('canvas');
+    oc.width  = W; oc.height = H;
+    const ctx = oc.getContext('2d');
+
+    // Clone positions so we don't disturb the live graph
+    const pos = new Map();
+    this.pos.forEach((p, id) => pos.set(id, { x: p.x, y: p.y, vx: 0, vy: 0 }));
+
+    const ids = [...this.nodes.keys()];
+
+    // Center clone around canvas midpoint
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    pos.forEach(p => { minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y); });
+    const origCX = (minX+maxX)/2, origCY = (minY+maxY)/2;
+    pos.forEach(p => { p.x += W/2 - origCX; p.y += H/2 - origCY; });
+
+    // Extra physics with wider spacing for print layout
+    const K_REPEL=12000, K_SPRING=0.035, TARGET=200, DAMP=0.78;
+    for (let t = 0; t < 260; t++) {
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i+1; j < ids.length; j++) {
+          const a = pos.get(ids[i]), b = pos.get(ids[j]);
+          const dx = b.x-a.x, dy = b.y-a.y;
+          const d2 = dx*dx+dy*dy||1, d = Math.sqrt(d2);
+          const f = K_REPEL/d2;
+          a.vx -= (dx/d)*f; a.vy -= (dy/d)*f;
+          b.vx += (dx/d)*f; b.vy += (dy/d)*f;
+        }
+      }
+      this.edges.forEach(e => {
+        const a = pos.get(e.from), b = pos.get(e.to);
+        if (!a||!b) return;
+        const dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+        const f=(d-TARGET)*K_SPRING;
+        a.vx+=(dx/d)*f; a.vy+=(dy/d)*f;
+        b.vx-=(dx/d)*f; b.vy-=(dy/d)*f;
+      });
+      ids.forEach(id => {
+        const p = pos.get(id);
+        p.vx += (W/2-p.x)*0.012; p.vy += (H/2-p.y)*0.012;
+        p.vx *= DAMP; p.vy *= DAMP;
+        p.x += p.vx; p.y += p.vy;
+      });
+    }
+
+    // Fit to canvas with padding
+    const PAD = 100;
+    minX=Infinity; maxX=-Infinity; minY=Infinity; maxY=-Infinity;
+    pos.forEach(p => { minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y); });
+    const cW=maxX-minX||1, cH=maxY-minY||1;
+    const fit = Math.min((W-PAD*2)/cW, (H-PAD*2)/cH, 1.8);
+    const fcx=(minX+maxX)/2, fcy=(minY+maxY)/2;
+    pos.forEach(p => { p.x=W/2+(p.x-fcx)*fit; p.y=H/2+(p.y-fcy)*fit; });
+
+    const NR = 30; // node radius
+
+    // ── Background ──
+    ctx.fillStyle = '#faf6ef';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle dot grid
+    ctx.fillStyle = 'rgba(180,160,120,0.18)';
+    for (let x = 30; x < W; x += 38) for (let y = 30; y < H; y += 38) {
+      ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI*2); ctx.fill();
+    }
+
+    // ── Edges ──
+    this.edges.forEach(e => {
+      const a = pos.get(e.from), b = pos.get(e.to);
+      if (!a||!b) return;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = '#c8b898'; ctx.lineWidth = 1.5; ctx.stroke();
+      if (e.label) {
+        const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+        ctx.font = '10px -apple-system, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const tw = ctx.measureText(e.label).width;
+        ctx.fillStyle = 'rgba(250,246,239,0.92)';
+        ctx.fillRect(mx-tw/2-4, my-8, tw+8, 16);
+        ctx.fillStyle = '#8a7a60'; ctx.fillText(e.label, mx, my);
+      }
+    });
+
+    // ── Nodes ──
+    const typeColors = { solution:'#b07828', consensus:'#b07828', claim:'#4a6a82', fact:'#4a7a5a', problem:'#9a3030', question:'#6a4a8a' };
+    this.nodes.forEach((node, id) => {
+      const p = pos.get(id); if (!p) return;
+      const baseColor = this.agentColors[node.agent] || '#c4983a';
+
+      // Shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 3;
+      ctx.beginPath(); ctx.arc(p.x, p.y, NR, 0, Math.PI*2);
+      ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.restore();
+
+      // Border ring
+      ctx.beginPath(); ctx.arc(p.x, p.y, NR, 0, Math.PI*2);
+      ctx.strokeStyle = baseColor; ctx.lineWidth = 3.5; ctx.stroke();
+
+      // Type dot
+      ctx.beginPath(); ctx.arc(p.x, p.y+NR-7, 5, 0, Math.PI*2);
+      ctx.fillStyle = typeColors[node.type] || baseColor; ctx.fill();
+
+      // Label — word-wrap with background rect
+      const label = node.label || id;
+      ctx.font = 'bold 11.5px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      const MAX_W = 96;
+      const words = label.split(' ');
+      const lines = []; let cur = [];
+      words.forEach(w => {
+        const cand = [...cur, w].join(' ');
+        if (ctx.measureText(cand).width > MAX_W && cur.length) { lines.push(cur.join(' ')); cur=[w]; }
+        else cur.push(w);
+      });
+      if (cur.length) lines.push(cur.join(' '));
+      const displayLines = lines.slice(0, 4);
+      const LH = 15, totalTH = displayLines.length * LH;
+      const labelY = p.y + NR + 9;
+      const maxLW = Math.max(...displayLines.map(l => ctx.measureText(l).width));
+
+      // Label bg
+      ctx.fillStyle = 'rgba(250,246,239,0.93)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(p.x-maxLW/2-5, labelY-3, maxLW+10, totalTH+6, 4);
+      else ctx.rect(p.x-maxLW/2-5, labelY-3, maxLW+10, totalTH+6);
+      ctx.fill();
+
+      // Label text
+      ctx.fillStyle = '#1a1208'; ctx.textBaseline = 'top';
+      displayLines.forEach((l, i) => ctx.fillText(l, p.x, labelY + i*LH));
+
+      // Agent name
+      ctx.font = '9.5px -apple-system, sans-serif';
+      ctx.fillStyle = baseColor;
+      ctx.fillText(node.agent || '', p.x, labelY + totalTH + 5);
+    });
+
+    return oc.toDataURL('image/png');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSEJO — App Controller
+// ═══════════════════════════════════════════════════════════════════════════
+window.consejo = (() => {
+  let graph = null;
+
+  // ── State ────────────────────────────────────────────────────────────
+  let state = {
+    panels:        [],
+    currentPanel:  null,
+    models:        [],
+    config:        {},
+    ws:            null,
+    running:       false,
+    sidebarOpen:   true,
+    graphOpen:     false,
+    currentSession: null,
+    agentTexts:    {},
+    agentThinking: {},
+    agentElements: {},
+    allSessions:   [],
+  };
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  async function init() {
+    await Promise.all([loadConfig(), loadModels(), loadPanels(), loadRecentSessions()]);
+    renderPanelSelect();
+    renderModelSelect();
+    updateObsidianStatus();
+    updateDocsStatus();
+    onPanelChange();
+    renderTemplates();
+    // Init graph
+    const canvas = document.getElementById('graph-canvas');
+    graph = new KnowledgeGraph(canvas);
+    // Init resizable sidebars
+    initResizableHandles();
+  }
+
+  async function loadConfig() {
+    const r = await fetch('/api/config');
+    state.config = await r.json();
+  }
+
+  async function loadModels() {
+    const r = await fetch('/api/models');
+    const d = await r.json();
+    state.models = d.models || [];
+  }
+
+  async function loadPanels() {
+    const r = await fetch('/api/panels');
+    const d = await r.json();
+    state.panels = d.panels || [];
+    renderSidebarPanels();
+  }
+
+  async function loadRecentSessions() {
+    const r = await fetch('/api/sessions');
+    const d = await r.json();
+    state.allSessions = d.sessions || [];
+    renderSidebarSessions(state.allSessions);
+  }
+
+  // ── Render sidebar ────────────────────────────────────────────────────
+  function renderSidebarPanels() {
+    const el = document.getElementById('panels-list');
+    el.innerHTML = state.panels.map((p, i) => `
+      <div class="sidebar-item ${state.currentPanel?.id === p.id ? 'active' : ''}"
+           onclick="consejo.selectPanel(${i})">
+        <span class="dot" style="background:${p.agents?.[0]?.color||'#5b4fff'}"></span>
+        ${p.name}
+      </div>
+    `).join('');
+  }
+
+  function renderSidebarSessions(sessions) {
+    const el = document.getElementById('sessions-list');
+    if (!sessions.length) {
+      el.innerHTML = `<div style="padding:6px 14px;font-size:11.5px;color:var(--text3)">Sin sesiones</div>`;
+      return;
+    }
+    el.innerHTML = sessions.map(s => `
+      <div class="sidebar-item" onclick="consejo.openSession('${s.path}')">
+        <span class="icon">${s.consensus ? '✓' : '·'}</span>
+        <span style="overflow:hidden;text-overflow:ellipsis">${s.topic.slice(0,35)}${s.topic.length>35?'…':''}</span>
+      </div>
+    `).join('');
+  }
+
+  // ── Panel select ──────────────────────────────────────────────────────
+  function renderPanelSelect() {
+    const sel = document.getElementById('panel-select');
+    sel.innerHTML = state.panels.map(p =>
+      `<option value="${p.id}">${p.name}</option>`
+    ).join('');
+  }
+
+  function renderModelSelect() {
+    ['model-select','pref-model','pref-mediator-model'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const current = el.value;
+      el.innerHTML = state.models.map(m => `<option value="${m}">${m}</option>`).join('');
+      if (current) el.value = current;
+    });
+    // Set default from config
+    const defModel = state.config?.models?.default || '';
+    const sel = document.getElementById('model-select');
+    if (defModel && sel) sel.value = defModel;
+  }
+
+  function onPanelChange() {
+    const sel = document.getElementById('panel-select');
+    state.currentPanel = state.panels.find(p => p.id === sel.value) || state.panels[0] || null;
+    renderAgentsBar();
+    renderSidebarPanels();
+  }
+
+  function selectPanel(idx) {
+    const p = state.panels[idx];
+    if (!p) return;
+    document.getElementById('panel-select').value = p.id;
+    onPanelChange();
+  }
+
+  function renderAgentsBar() {
+    const bar = document.getElementById('agents-bar');
+    if (!state.currentPanel) { bar.innerHTML = ''; return; }
+    bar.innerHTML = state.currentPanel.agents.map(a => `
+      <div class="agent-pill">
+        <div class="agent-dot" style="background:${a.color}"></div>
+        ${a.emoji || ''} ${a.name}
+      </div>
+    `).join('');
+  }
+
+  // ── Obsidian status ───────────────────────────────────────────────────
+  async function updateObsidianStatus() {
+    const el = document.getElementById('obsidian-status');
+    const r = await fetch('/api/obsidian/status');
+    const d = await r.json();
+    if (d.configured && d.exists) {
+      el.innerHTML = `<span class="obsidian-badge">⬡ Obsidian</span>`;
+    } else if (d.configured) {
+      el.innerHTML = `<span style="color:var(--red);font-size:11px">⬡ Vault no encontrado</span>`;
+    } else {
+      el.innerHTML = `<span style="color:var(--text3);font-size:11px">⬡ Sin vault</span>`;
+    }
+  }
+
+  // ── Session ───────────────────────────────────────────────────────────
+  function newSession() {
+    if (state.running) return;
+    document.getElementById('topic-input').value = '';
+    document.getElementById('debate-area').innerHTML = `
+      <div id="empty-state">
+        <img src="/assets/logo.png" class="empty-logo" alt="">
+        <div class="empty-title">Convoca el consejo</div>
+        <div class="empty-sub">Elige un panel, selecciona el modo y escribe el tema</div>
+      </div>`;
+    state.currentSession = null;
+    state.agentTexts   = {};
+    state.agentThinking = {};
+    state.agentElements = {};
+    if (graph) graph.clear();
+    // Clear graph detail
+    const gd = document.getElementById('graph-detail');
+    if (gd) gd.classList.remove('visible');
+  }
+
+  // Reseteo completo de workspace — sin afectar sesiones guardadas
+  function newWorkspace() {
+    if (state.running) { appendStatus('Espera a que termine el debate actual.'); return; }
+    newSession();
+    // Reset panel al primero
+    const sel = document.getElementById('panel-select');
+    if (sel && state.panels.length) {
+      sel.value = state.panels[0].id;
+      onPanelChange();
+    }
+    // Reset mode
+    const modeEl = document.getElementById('mode-select');
+    if (modeEl) modeEl.value = 'debate';
+    appendStatus('✦ Espacio de trabajo limpio. Tus sesiones anteriores están guardadas en el historial.');
+  }
+
+  async function startSession() {
+    if (state.running) return;
+    const topic = document.getElementById('topic-input').value.trim();
+    if (!topic) { document.getElementById('topic-input').focus(); return; }
+    if (!state.currentPanel) { alert('Selecciona un panel'); return; }
+
+    const mode  = document.getElementById('mode-select').value;
+    const model = document.getElementById('model-select').value;
+
+    state.running = true;
+    state.agentTexts = {};
+    state.agentThinking = {};
+    state.agentElements = {};
+
+    document.getElementById('start-btn').disabled = true;
+    clearDebateArea();
+    if (graph) { graph.clear(); graph.setAgentColors(state.currentPanel.agents); }
+    updateGraphLegend();
+
+    // Status
+    appendStatus(`Iniciando ${MODE_LABELS[mode] || mode}…`);
+
+    if (state.ws) { try { state.ws.close(); } catch(e) {} }
+
+    const ws = new WebSocket(WS_URL);
+    state.ws = ws;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        topic,
+        mode,
+        model,
+        panel: state.currentPanel,
+      }));
+    };
+
+    ws.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      handleMessage(msg);
+    };
+
+    ws.onerror = () => appendStatus('Error de conexión.');
+
+    ws.onclose = () => {
+      state.running = false;
+      document.getElementById('start-btn').disabled = false;
+    };
+  }
+
+  function clearDebateArea() {
+    document.getElementById('debate-area').innerHTML = '';
+  }
+
+  function appendStatus(text) {
+    const area = document.getElementById('debate-area');
+    const el = document.createElement('div');
+    el.className = 'status-msg';
+    el.textContent = text;
+    area.appendChild(el);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function handleMessage(msg) {
+    const area = document.getElementById('debate-area');
+
+    switch (msg.type) {
+      case 'debate_start': {
+        const mode = document.getElementById('mode-select').value;
+        appendStatus(`${MODE_LABELS[mode] || mode} · ${msg.model}`);
+        break;
+      }
+
+      case 'round_start': {
+        const div = document.createElement('div');
+        div.className = 'round-header';
+        div.innerHTML = `
+          <div class="round-line"></div>
+          <div class="round-label">Ronda ${msg.round} / ${msg.max}</div>
+          <div class="round-line"></div>`;
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'agent_start': {
+        const agent = state.currentPanel?.agents?.find(a => a.id === msg.agent);
+        if (!agent) break;
+
+        state.agentTexts[msg.agent] = '';
+        state.agentThinking[msg.agent] = null;
+        const card = document.createElement('div');
+        card.className = 'agent-card active';
+        card.id = `card-${msg.agent}-${Date.now()}`;
+        card.innerHTML = `
+          <div class="agent-card-header">
+            <div class="agent-color-dot" style="background:${agent.color}"></div>
+            <span class="agent-emoji">${agent.emoji || ''}</span>
+            <span class="agent-name">${agent.name}</span>
+            <div class="thinking-indicator">
+              <div class="thinking-dot"></div>
+              <div class="thinking-dot"></div>
+              <div class="thinking-dot"></div>
+            </div>
+          </div>
+          <div class="agent-card-body" id="body-${card.id}"></div>
+          <div class="agent-thinking-block" id="think-${card.id}"></div>`;
+        // Click header to collapse/expand (only after streaming is done)
+        card.querySelector('.agent-card-header').addEventListener('click', () => {
+          if (card.classList.contains('active')) return;
+          card.classList.toggle('collapsed');
+          const chev = card.querySelector('.expand-chevron');
+          if (chev) chev.textContent = card.classList.contains('collapsed') ? '▸' : '▾';
+        });
+        area.appendChild(card);
+        state.agentElements[msg.agent] = card;
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'chunk': {
+        const card = state.agentElements[msg.agent];
+        if (!card) break;
+        state.agentTexts[msg.agent] = (state.agentTexts[msg.agent] || '') + msg.text;
+        const body = card.querySelector('.agent-card-body');
+        if (body) body.textContent = state.agentTexts[msg.agent];
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'search': {
+        const card = state.agentElements[msg.agent];
+        if (!card) break;
+        const si = document.createElement('div');
+        si.className = 'search-indicator';
+        si.textContent = `🔍 Buscando: ${msg.query}`;
+        card.appendChild(si);
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'citation_loading': {
+        const card = state.agentElements[msg.agent];
+        if (!card) break;
+        const ci = document.createElement('div');
+        ci.className = 'citation-indicator';
+        ci.id = `cite-loading-${msg.agent}-${Date.now()}`;
+        ci.textContent = `🔗 Cargando: ${msg.url}`;
+        card.appendChild(ci);
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'citation': {
+        const card = state.agentElements[msg.agent];
+        if (!card) break;
+        // Replace loading indicator or add new
+        const loadingEl = card.querySelector('[id^="cite-loading-"]');
+        const ci = document.createElement('div');
+        ci.className = 'citation-indicator';
+        ci.innerHTML = `
+          <div>
+            <div><span class="cite-domain">🔗 ${escHtml(msg.domain)}</span></div>
+            <div class="cite-snippet">${escHtml(msg.snippet)}</div>
+          </div>`;
+        if (loadingEl) loadingEl.replaceWith(ci);
+        else card.appendChild(ci);
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'docs_loaded':
+        appendStatus(`📄 ${msg.count} documento${msg.count !== 1 ? 's' : ''} cargado${msg.count !== 1 ? 's' : ''}: ${(msg.names || []).join(', ')}`);
+        break;
+
+      case 'agent_thinking': {
+        // Store thinking text — will be shown via button after agent is done
+        state.agentThinking[msg.agent] = msg.thinking;
+        break;
+      }
+
+      case 'agent_done': {
+        const card = state.agentElements[msg.agent];
+        if (!card) break;
+        card.classList.remove('active');
+        const ind = card.querySelector('.thinking-indicator');
+        if (ind) {
+          // Replace spinner with collapse chevron
+          const chev = document.createElement('span');
+          chev.className = 'expand-chevron';
+          chev.textContent = '▾';
+          ind.replaceWith(chev);
+        }
+
+        const bodyEl = card.querySelector('.agent-card-body');
+        const text = state.agentTexts[msg.agent] || '';
+        const thinking = state.agentThinking[msg.agent];
+
+        // Footer with expand / thinking buttons
+        const footer = document.createElement('div');
+        footer.className = 'card-footer';
+
+        if (text.length > 320) {
+          bodyEl.classList.add('truncated');
+          const expandBtn = document.createElement('button');
+          expandBtn.className = 'card-btn';
+          expandBtn.textContent = 'Ver completo';
+          expandBtn.onclick = e => {
+            e.stopPropagation();
+            bodyEl.classList.toggle('truncated');
+            expandBtn.textContent = bodyEl.classList.contains('truncated') ? 'Ver completo' : 'Colapsar';
+          };
+          footer.appendChild(expandBtn);
+        }
+
+        if (thinking) {
+          const thinkBtn = document.createElement('button');
+          thinkBtn.className = 'card-btn';
+          thinkBtn.style.color = 'var(--accent2)';
+          thinkBtn.textContent = '◉ Pensamiento';
+          const thinkBlock = card.querySelector('.agent-thinking-block');
+          if (thinkBlock) {
+            thinkBlock.innerHTML = `<div class="thinking-label">Razonamiento interno</div>${escHtml(thinking)}`;
+            thinkBtn.onclick = () => thinkBlock.classList.toggle('visible');
+            footer.appendChild(thinkBtn);
+          }
+        }
+
+        if (footer.children.length > 0) card.appendChild(footer);
+        break;
+      }
+
+      case 'mediator_thinking':
+        appendStatus('Mediador estructurando conocimiento…');
+        break;
+
+      case 'graph_update': {
+        if (graph && (msg.new_nodes?.length || msg.new_edges?.length)) {
+          if (!state.graphOpen) toggleGraph();
+          graph.addNodes(msg.new_nodes || []);
+          graph.addEdges(msg.new_edges || []);
+          updateGraphLegend();
+        }
+        break;
+      }
+
+      case 'round_assessment': {
+        if (msg.reason) {
+          const d = document.createElement('div');
+          d.className = 'round-assessment';
+          d.textContent = `◈ ${msg.reason}`;
+          document.getElementById('debate-area').appendChild(d);
+        }
+        break;
+      }
+
+      case 'consensus_reached': {
+        const conf = Math.round(msg.confidence * 100);
+        const conclusion = msg.conclusion;
+        const div = document.createElement('div');
+        div.className = 'consensus-card';
+        div.innerHTML = `
+          <div class="consensus-title">✓ Consenso alcanzado · Ronda ${msg.round}</div>
+          <div class="consensus-text">${escHtml(conclusion)}</div>
+          <div class="consensus-meta">Confianza: ${conf}%</div>`;
+        const pdfBtn = document.createElement('button');
+        pdfBtn.className = 'export-pdf-btn';
+        pdfBtn.innerHTML = '⬛ Exportar PDF';
+        pdfBtn.onclick = () => exportPDF(conclusion);
+        div.appendChild(pdfBtn);
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'debate_end': {
+        if (!msg.consensus) {
+          const div = document.createElement('div');
+          div.className = 'no-consensus-card';
+          div.textContent = msg.message || `${msg.rounds} rondas completadas sin consenso formal.`;
+          area.appendChild(div);
+        }
+        area.scrollTop = area.scrollHeight;
+        break;
+      }
+
+      case 'session_saved': {
+        const div = document.createElement('div');
+        div.className = 'saved-indicator';
+        let label = `<div class="saved-dot"></div> Sesión guardada`;
+        if (msg.obsidian_path) {
+          label += ` · <span class="obsidian-badge">⬡ Exportado a Obsidian</span>`;
+        }
+        div.innerHTML = label;
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+        loadRecentSessions();
+        break;
+      }
+
+      case 'error':
+        appendStatus(`Error: ${msg.message}`);
+        break;
+    }
+  }
+
+  // ── Open session ──────────────────────────────────────────────────────
+  async function openSession(pathOrFile) {
+    const filename = pathOrFile.includes('/') ? pathOrFile.split('/').pop() : pathOrFile;
+    const r = await fetch(`/api/sessions/${filename}`);
+    const s = await r.json();
+    if (s.error) { alert('No se pudo cargar la sesión.'); return; }
+
+    clearDebateArea();
+    const area = document.getElementById('debate-area');
+    document.getElementById('topic-input').value = s.topic || '';
+
+    // Resolve agents from saved panel data or current panel
+    const sessionAgents = s.panel_agents || state.currentPanel?.agents || [];
+    // Build a quick lookup by id
+    const agentMap = {};
+    sessionAgents.forEach(a => { agentMap[a.id] = a; });
+
+    appendStatus(`Sesión: ${s.topic} · ${s.panel} · ${s.mode || 'debate'}`);
+
+    // ── Restore knowledge graph ───────────────────────────────────────
+    if (graph) {
+      graph.clear();
+      const savedNodes = s.all_nodes || [];
+      const savedEdges = s.all_edges || [];
+
+      if (savedNodes.length > 0) {
+        // Set agent colors from session agents or fall back to AGENT_COLORS
+        const colorMap = {};
+        sessionAgents.forEach((a, i) => {
+          colorMap[a.id] = a.color || AGENT_COLORS[i % AGENT_COLORS.length];
+        });
+        colorMap['consenso'] = '#c4983a';
+        graph.agentColors = colorMap;
+        graph.addNodes(savedNodes);
+        graph.addEdges(savedEdges);
+        // Open graph panel to show it
+        if (!state.graphOpen) toggleGraph();
+        // Update legend from session agents
+        const legendEl = document.getElementById('graph-legend');
+        if (legendEl) {
+          legendEl.innerHTML =
+            sessionAgents.map(a =>
+              `<div class="legend-item"><div class="legend-dot" style="background:${a.color||'#c4983a'}"></div>${a.name}</div>`
+            ).join('') +
+            `<div class="legend-item"><div class="legend-dot" style="background:#c4983a"></div>Consenso</div>`;
+        }
+      }
+    }
+
+    // ── Mostrar rondas ────────────────────────────────────────────────
+    (s.rounds || []).forEach(round => {
+      const rh = document.createElement('div');
+      rh.className = 'round-header';
+      rh.innerHTML = `<div class="round-line"></div><div class="round-label">Ronda ${round.round}</div><div class="round-line"></div>`;
+      area.appendChild(rh);
+
+      Object.entries(round.responses || {}).forEach(([aid, text]) => {
+        const agent = agentMap[aid] || { id: aid, name: aid, color: '#5b4fff', emoji: '' };
+        const card = document.createElement('div');
+        card.className = 'agent-card';
+        card.innerHTML = `
+          <div class="agent-card-header">
+            <div class="agent-color-dot" style="background:${agent.color}"></div>
+            <span class="agent-emoji">${agent.emoji||''}</span>
+            <span class="agent-name">${agent.name}</span>
+            <span class="expand-chevron">▾</span>
+          </div>
+          <div class="agent-card-body ${text.length > 320 ? 'truncated' : ''}">${escHtml(text)}</div>`;
+        // Header click → collapse/expand
+        card.querySelector('.agent-card-header').addEventListener('click', () => {
+          card.classList.toggle('collapsed');
+          card.querySelector('.expand-chevron').textContent =
+            card.classList.contains('collapsed') ? '▸' : '▾';
+        });
+        // "Ver completo" for long responses
+        if (text.length > 320) {
+          const footer = document.createElement('div');
+          footer.className = 'card-footer';
+          const expandBtn = document.createElement('button');
+          expandBtn.className = 'card-btn';
+          expandBtn.textContent = 'Ver completo';
+          const body = card.querySelector('.agent-card-body');
+          expandBtn.onclick = e => {
+            e.stopPropagation();
+            body.classList.toggle('truncated');
+            expandBtn.textContent = body.classList.contains('truncated') ? 'Ver completo' : 'Colapsar';
+          };
+          footer.appendChild(expandBtn);
+          card.appendChild(footer);
+        }
+        area.appendChild(card);
+      });
+    });
+
+    // ── Mostrar consenso si existe ────────────────────────────────────
+    if (s.consensus_reached) {
+      const conclusion = s.consensus?.conclusion ||
+        (s.all_nodes || []).find(n => n.type === 'solution')?.label ||
+        '(ver transcripción)';
+      const div = document.createElement('div');
+      div.className = 'consensus-card';
+      div.innerHTML = `
+        <div class="consensus-title">✓ Consenso (sesión guardada)</div>
+        <div class="consensus-text">${escHtml(conclusion)}</div>
+        ${s.consensus?.confidence ? `<div class="consensus-meta">Confianza: ${Math.round(s.consensus.confidence * 100)}%</div>` : ''}`;
+      // Export button
+      const pdfBtn = document.createElement('button');
+      pdfBtn.className = 'export-pdf-btn';
+      pdfBtn.innerHTML = '⬛ Exportar PDF';
+      pdfBtn.onclick = () => exportPDF(conclusion);
+      div.appendChild(pdfBtn);
+      area.appendChild(div);
+    }
+
+    area.scrollTop = area.scrollHeight;
+  }
+
+  // ── Save ──────────────────────────────────────────────────────────────
+  function saveSession() {
+    appendStatus('La sesión se guarda automáticamente al finalizar el debate.');
+  }
+
+  function saveSessionAs() {
+    if (typeof pywebview !== 'undefined') {
+      pywebview.api.save_file_dialog('sesion.json').then(path => {
+        if (path) appendStatus(`Guardar en: ${path} (función disponible en próxima versión)`);
+      });
+    }
+  }
+
+  // ── Properties ────────────────────────────────────────────────────────
+  function showProperties() {
+    const el = document.getElementById('props-content');
+    const panel = state.currentPanel;
+    const mode = document.getElementById('mode-select').value;
+    const model = document.getElementById('model-select').value;
+    el.innerHTML = `
+      <b>Panel:</b> ${panel?.name || '—'}<br>
+      <b>Agentes:</b> ${panel?.agents?.map(a => a.name).join(', ') || '—'}<br>
+      <b>Modo:</b> ${MODE_LABELS[mode] || mode}<br>
+      <b>Modelo:</b> ${model}<br>
+      <b>Rondas máx:</b> ${state.config?.debate?.max_rounds || 8}<br>
+      <b>Umbral consenso:</b> ${state.config?.debate?.consensus_threshold || 0.75}<br>
+    `;
+    openModal('props-modal');
+  }
+
+  // ── Preferences ───────────────────────────────────────────────────────
+  function showPreferences() {
+    const cfg = state.config;
+    const obs = cfg.obsidian || {};
+    const models = cfg.models || {};
+    const debate = cfg.debate || {};
+    const docs = cfg.docs || {};
+
+    document.getElementById('pref-docs-path').value    = docs.path || '';
+    document.getElementById('pref-vault').value        = obs.vault_path || '';
+    document.getElementById('pref-auto-export').value  = String(obs.auto_export !== false);
+    document.getElementById('pref-subfolder').value    = obs.subfolder || 'CONSEJO';
+    document.getElementById('pref-max-rounds').value   = debate.max_rounds || 8;
+    document.getElementById('pref-threshold').value    = debate.consensus_threshold || 0.75;
+
+    renderModelSelect();
+    const pm = document.getElementById('pref-model');
+    if (pm && models.default) pm.value = models.default;
+    const pmm = document.getElementById('pref-mediator-model');
+    if (pmm && models.mediator) pmm.value = models.mediator;
+
+    openModal('prefs-modal');
+  }
+
+  async function savePreferences() {
+    const docsPath    = document.getElementById('pref-docs-path').value.trim();
+    const vault       = document.getElementById('pref-vault').value.trim();
+    const autoExport  = document.getElementById('pref-auto-export').value === 'true';
+    const subfolder   = document.getElementById('pref-subfolder').value.trim() || 'CONSEJO';
+    const defModel    = document.getElementById('pref-model').value;
+    const medModel    = document.getElementById('pref-mediator-model').value;
+    const maxRounds   = parseInt(document.getElementById('pref-max-rounds').value) || 8;
+    const threshold   = parseFloat(document.getElementById('pref-threshold').value) || 0.75;
+
+    const data = {
+      docs:    { path: docsPath },
+      obsidian: { vault_path: vault, auto_export: autoExport, subfolder },
+      models:   { default: defModel, mediator: medModel },
+      debate:   { max_rounds: maxRounds, consensus_threshold: threshold },
+    };
+
+    await fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    await loadConfig();
+    updateObsidianStatus();
+    await updateDocsStatus();
+    closeModal('prefs-modal');
+  }
+
+  async function chooseVault() {
+    if (typeof pywebview !== 'undefined') {
+      const path = await pywebview.api.choose_folder();
+      if (path) document.getElementById('pref-vault').value = path;
+    }
+  }
+
+  async function chooseDocsFolder() {
+    if (typeof pywebview !== 'undefined') {
+      const path = await pywebview.api.choose_folder();
+      if (path) {
+        const el = document.getElementById('pref-docs-path');
+        if (el) el.value = path;
+        // If called from sidebar (not from prefs modal), save immediately
+        if (!document.getElementById('prefs-modal').classList.contains('open')) {
+          await fetch('/api/config', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ docs: { path } }),
+          });
+          await loadConfig();
+          await updateDocsStatus();
+        }
+      }
+    }
+  }
+
+  // ── Docs status ───────────────────────────────────────────────────────
+  async function updateDocsStatus() {
+    const r = await fetch('/api/docs');
+    const d = await r.json();
+    const topbarEl  = document.getElementById('docs-status');
+    const sidebarEl = document.getElementById('docs-status-sidebar');
+    const listEl    = document.getElementById('docs-list');
+
+    const noContent = `<div class="docs-item">Sin carpeta configurada</div>`;
+
+    if (!d.configured || !d.docs?.length) {
+      if (topbarEl)  topbarEl.innerHTML  = '';
+      if (sidebarEl) sidebarEl.textContent = '';
+      if (listEl)    listEl.innerHTML = noContent;
+      return;
+    }
+
+    const n = d.docs.length;
+    const badge = `<span class="docs-badge">📄 ${n}</span>`;
+    if (topbarEl)  topbarEl.innerHTML  = badge;
+    if (sidebarEl) sidebarEl.textContent = `${n} archivo${n !== 1 ? 's' : ''}`;
+
+    if (listEl) {
+      listEl.innerHTML = d.docs.map(doc => {
+        const icon = doc.name.endsWith('.pdf') ? '📄' : doc.name.endsWith('.docx') ? '📝' : '📃';
+        return `<div class="docs-item" title="${escHtml(doc.name)}">
+          <span class="doc-icon">${icon}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis">${escHtml(doc.name)}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Permissions ───────────────────────────────────────────────────────
+  function showPermissions() {
+    const cfg = state.config;
+    const vault = cfg?.obsidian?.vault_path || '(no configurado)';
+    document.getElementById('perms-content').innerHTML = `
+      <b>Vault Obsidian:</b> ${escHtml(vault)}<br>
+      <b>Acceso:</b> ${vault !== '(no configurado)' ? 'lectura + escritura' : '—'}<br><br>
+      <b>Sesiones locales:</b> ~/Developer/consejo/sessions/<br>
+      <b>Paneles:</b> ~/Developer/consejo/panels/<br>
+      <b>Conocimiento:</b> ~/Developer/consejo/knowledge/<br><br>
+      <b>Ollama API:</b> http://localhost:11434<br>
+      <b>Búsqueda web:</b> DuckDuckGo (sin API key, anónimo)<br>
+    `;
+    openModal('perms-modal');
+  }
+
+  // ── Panel Builder ─────────────────────────────────────────────────────
+  function showPanelBuilder(existingPanel = null) {
+    document.getElementById('panel-modal-title').textContent =
+      existingPanel ? 'Editar panel' : 'Nuevo panel';
+    document.getElementById('pb-name').value = existingPanel?.name || '';
+    document.getElementById('pb-description').value = existingPanel?.description || '';
+
+    const agents = existingPanel?.agents || [_blankAgent(0), _blankAgent(1)];
+    _renderBuilderAgents(agents);
+    openModal('panel-modal');
+  }
+
+  function _blankAgent(idx) {
+    return { id: `agente${idx+1}`, name: '', color: AGENT_COLORS[idx % AGENT_COLORS.length], emoji: '', system: '' };
+  }
+
+  function _renderBuilderAgents(agents) {
+    const list = document.getElementById('pb-agents-list');
+    const modelOptions = state.models.map(m =>
+      `<option value="${escAttr(m)}">${escHtml(m)}</option>`
+    ).join('');
+
+    list.innerHTML = agents.map((a, i) => `
+      <div class="agent-editor-item" id="pb-agent-${i}">
+        <div>
+          <label style="font-size:10.5px;color:var(--text2)">Nombre</label>
+          <input type="text" placeholder="Nombre" value="${escAttr(a.name)}" data-field="name" data-idx="${i}">
+        </div>
+        <div class="agent-color-swatch">
+          <div>
+            <label style="font-size:10.5px;color:var(--text2)">Color · Emoji</label>
+            <div style="display:flex;gap:4px;align-items:center;margin-top:4px">
+              <input type="color" value="${a.color||'#5b4fff'}" data-field="color" data-idx="${i}">
+              <input type="text" placeholder="🔬" value="${escAttr(a.emoji||'')}" style="width:48px" data-field="emoji" data-idx="${i}">
+            </div>
+          </div>
+          <button class="remove-agent-btn" onclick="consejo.removeAgentFromBuilder(${i})" style="margin-left:auto;align-self:flex-end">✕</button>
+        </div>
+        <div class="full-col">
+          <label style="font-size:10.5px;color:var(--text2)">Modelo <span style="color:var(--text3)">(opcional — sobreescribe el global)</span></label>
+          <select data-field="model" data-idx="${i}">
+            <option value="">— usar modelo global —</option>
+            ${modelOptions}
+          </select>
+          ${a.model ? `<script>setTimeout(()=>{const s=document.querySelector('[data-field="model"][data-idx="${i}"]');if(s)s.value="${escAttr(a.model||'')}";},50)<\/script>` : ''}
+        </div>
+        <div class="full-col">
+          <label style="font-size:10.5px;color:var(--text2)">System prompt</label>
+          <textarea placeholder="Describe el rol, especialidad y forma de responder…" data-field="system" data-idx="${i}">${escHtml(a.system||'')}</textarea>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function _getBuilderAgents() {
+    const list = document.getElementById('pb-agents-list');
+    const items = list.querySelectorAll('.agent-editor-item');
+    return Array.from(items).map((item, i) => {
+      const get = field => {
+        const el = item.querySelector(`[data-field="${field}"]`);
+        return el ? el.value : '';
+      };
+      const model = get('model');
+      const agent = {
+        id: `agente${i+1}`,
+        name: get('name'),
+        color: get('color'),
+        emoji: get('emoji'),
+        system: get('system'),
+      };
+      if (model) agent.model = model;
+      return agent;
+    });
+  }
+
+  function addAgentToBuilder() {
+    const agents = _getBuilderAgents();
+    agents.push(_blankAgent(agents.length));
+    _renderBuilderAgents(agents);
+  }
+
+  function removeAgentFromBuilder(idx) {
+    const agents = _getBuilderAgents();
+    agents.splice(idx, 1);
+    _renderBuilderAgents(agents);
+  }
+
+  async function savePanel() {
+    const name = document.getElementById('pb-name').value.trim();
+    if (!name) { alert('El panel necesita un nombre.'); return; }
+
+    const agents = _getBuilderAgents().filter(a => a.name);
+    if (agents.length < 1) { alert('Agrega al menos un agente.'); return; }
+
+    const panel = {
+      id: name.toLowerCase().replace(/[^\w]/g, '_'),
+      name,
+      description: document.getElementById('pb-description').value.trim(),
+      agents,
+    };
+
+    await fetch('/api/panels', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(panel),
+    });
+
+    await loadPanels();
+    renderPanelSelect();
+    closeModal('panel-modal');
+
+    // Select new panel
+    const sel = document.getElementById('panel-select');
+    sel.value = panel.id;
+    onPanelChange();
+  }
+
+  // ── Sidebar ───────────────────────────────────────────────────────────
+  function toggleSidebar() {
+    state.sidebarOpen = !state.sidebarOpen;
+    document.getElementById('sidebar').classList.toggle('collapsed', !state.sidebarOpen);
+  }
+
+  // ── Graph panel ───────────────────────────────────────────────────────
+  function toggleGraph() {
+    state.graphOpen = !state.graphOpen;
+    document.getElementById('graph-panel').classList.toggle('open', state.graphOpen);
+    document.getElementById('graph-toggle-btn').classList.toggle('active', state.graphOpen);
+    if (state.graphOpen && graph) {
+      setTimeout(() => { graph.resize(); }, 260);
+    }
+  }
+
+  function updateGraphLegend() {
+    const el = document.getElementById('graph-legend');
+    if (!state.currentPanel) return;
+    const items = state.currentPanel.agents.map(a =>
+      `<div class="legend-item"><div class="legend-dot" style="background:${a.color}"></div>${a.name}</div>`
+    ).join('');
+    el.innerHTML = items + `<div class="legend-item"><div class="legend-dot" style="background:#c4983a"></div>Consenso</div>`;
+  }
+
+  // ── Auto-configure agents ─────────────────────────────────────────────
+  async function autoConfigureAgents() {
+    const topic = document.getElementById('topic-input').value.trim();
+    if (!topic) { document.getElementById('topic-input').focus(); return; }
+
+    const btn = document.getElementById('auto-agents-btn');
+    btn.disabled = true;
+    btn.textContent = '✦ Generando…';
+
+    try {
+      const model = document.getElementById('model-select').value;
+      const r = await fetch('/api/auto-agents', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ topic, model }),
+      });
+      const data = await r.json();
+
+      if (data.error) { alert(data.error); return; }
+
+      // Open panel builder pre-filled
+      document.getElementById('panel-modal-title').textContent = 'Panel sugerido por IA';
+      document.getElementById('pb-name').value = data.panel_name || 'Panel Auto';
+      document.getElementById('pb-description').value = data.panel_description || '';
+      _renderBuilderAgents(data.agents || []);
+      openModal('panel-modal');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✦ Sugerir panel';
+    }
+  }
+
+  // ── Debate templates ──────────────────────────────────────────────────
+  const TEMPLATES = [
+    { icon: '⚖️', label: 'Análisis FODA',       topic: 'Realiza un análisis FODA completo sobre: ' },
+    { icon: '🔬', label: 'Revisión de código',   topic: 'Revisa, mejora y encuentra errores en el siguiente código:\n\n' },
+    { icon: '🧠', label: 'Dilema filosófico',    topic: 'Analiza desde distintas perspectivas filosóficas: ' },
+    { icon: '🌍', label: 'Impacto social/ético', topic: 'Evalúa el impacto social y ético de: ' },
+    { icon: '🚀', label: 'Estrategia de proyecto', topic: 'Diseña una estrategia completa para el proyecto: ' },
+    { icon: '🔮', label: 'Prospectiva',          topic: 'Analiza posibles futuros y escenarios para: ' },
+    { icon: '📐', label: 'Arquitectura técnica', topic: 'Diseña y evalúa la arquitectura técnica para: ' },
+    { icon: '🤝', label: 'Negociación',          topic: 'Analiza la situación de negociación y sugiere estrategias para: ' },
+  ];
+
+  function renderTemplates() {
+    const el = document.getElementById('templates-list');
+    if (!el) return;
+    el.innerHTML = TEMPLATES.map((t, i) => `
+      <div class="template-item" onclick="consejo.useTemplate(${i})">
+        <span class="template-icon">${t.icon}</span>
+        <span>${t.label}</span>
+      </div>`).join('');
+  }
+
+  function useTemplate(idx) {
+    const t = TEMPLATES[idx];
+    if (!t) return;
+    const input = document.getElementById('topic-input');
+    input.value = t.topic;
+    input.focus();
+    const len = t.topic.length;
+    input.setSelectionRange(len, len);
+  }
+
+  // ── Export PDF ────────────────────────────────────────────────────────
+  async function exportPDF(consensusText) {
+    const graphImg  = (graph && graph.nodes.size > 0) ? graph.getExportImageDataURL(1600, 960) : null;
+    const topic     = document.getElementById('topic-input').value || 'Debate';
+    const panelName = state.currentPanel?.name || 'Panel';
+    const agents    = state.currentPanel?.agents || [];
+    const mode      = document.getElementById('mode-select')?.value || 'debate';
+    const dateStr   = new Date().toLocaleDateString('es-ES', { year:'numeric', month:'long', day:'numeric' });
+    const timeStr   = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+
+    // Fetch logo as base64 for watermark
+    const logoB64 = await _fetchLogoB64();
+
+    // Collect debate rounds from the DOM
+    const debateArea = document.getElementById('debate-area');
+    const roundEls   = debateArea ? [...debateArea.querySelectorAll('.round-header')] : [];
+
+    // Build transcript HTML
+    let transcriptHtml = '';
+    let roundCount = 0;
+    if (debateArea) {
+      let currentRoundHtml = '';
+      let inRound = false;
+      for (const child of debateArea.children) {
+        if (child.classList.contains('round-header')) {
+          if (inRound) transcriptHtml += `<div class="round-block">${currentRoundHtml}</div>`;
+          roundCount++;
+          const label = child.querySelector('.round-label')?.textContent || `Ronda ${roundCount}`;
+          currentRoundHtml = `<div class="round-label-pdf">${_escHtmlPDF(label)}</div>`;
+          inRound = true;
+        } else if (child.classList.contains('agent-card') && inRound) {
+          const name  = child.querySelector('.agent-name')?.textContent || '';
+          const emoji = child.querySelector('.agent-emoji')?.textContent || '';
+          const dot   = child.querySelector('.agent-color-dot');
+          const color = dot ? (dot.style.background || '#c4983a') : '#c4983a';
+          const bodyEl = child.querySelector('.agent-card-body');
+          const bodyText = bodyEl ? bodyEl.textContent : '';
+          currentRoundHtml += `
+            <div class="agent-entry">
+              <div class="agent-entry-header" style="border-left-color:${color}">
+                <span class="agent-entry-name">${_escHtmlPDF(emoji)} ${_escHtmlPDF(name)}</span>
+              </div>
+              <div class="agent-entry-body">${_escHtmlPDF(bodyText)}</div>
+            </div>`;
+        }
+      }
+      if (inRound) transcriptHtml += `<div class="round-block">${currentRoundHtml}</div>`;
+    }
+
+    // Build knowledge graph legend HTML
+    const nodeTypes = { claim:'Posición', fact:'Hecho', solution:'Solución', problem:'Problema', question:'Pregunta', consensus:'Consenso' };
+    const agentLegendHtml = agents.map(a =>
+      `<div class="legend-row"><span class="legend-dot" style="background:${a.color}"></span>${_escHtmlPDF(a.emoji||'')} ${_escHtmlPDF(a.name)}</div>`
+    ).join('') +
+    `<div class="legend-row"><span class="legend-dot" style="background:#c4983a"></span>Consenso</div>`;
+
+    const nodeTypeLegendHtml = Object.entries(nodeTypes).map(([k,v]) =>
+      `<div class="legend-row"><span class="type-badge">${_escHtmlPDF(v)}</span></div>`
+    ).join('');
+
+    // Practical guide points (generated from consensus keywords)
+    const guidePoints = _generateGuidePoints(consensusText, agents);
+
+    const watermarkEl = logoB64
+      ? `<img class="watermark" src="${logoB64}" alt="">`
+      : `<div class="watermark-text">CONSEJO</div>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CONSEJO — ${_escHtmlPDF(topic)}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+         background: #fff; color: #1a1208; font-size: 13px; line-height: 1.75;
+         max-width: 760px; margin: 0 auto; }
+  @page { margin: 3.2cm 3.5cm; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none; }
+  }
+
+  /* ── Watermark ── */
+  .watermark {
+    position: fixed; bottom: 18mm; right: 14mm;
+    width: 44px; height: 44px; opacity: 0.1;
+    z-index: 0; pointer-events: none; object-fit: contain;
+  }
+  .watermark-text {
+    position: fixed; bottom: 18mm; right: 14mm;
+    font-size: 9px; font-weight: 700; letter-spacing: .3em;
+    color: #c4983a; opacity: 0.18; z-index: 0; pointer-events: none;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(145deg, #160c06 0%, #1e0e10 50%, #120a0e 100%);
+    color: #f0e8d8; padding: 70px 52px 56px; page-break-after: always;
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 40px,
+                rgba(196,152,58,.015) 40px, rgba(196,152,58,.015) 41px);
+    pointer-events: none;
+  }
+  .cover-logo { font-size: 11px; font-weight: 700; letter-spacing: .35em;
+                color: #c4983a; text-transform: uppercase; margin-bottom: 60px; }
+  .cover-topic { font-size: 28px; font-weight: 400; line-height: 1.45;
+                 color: #f0e8d8; font-style: italic; max-width: 85%; margin-bottom: 32px; }
+  .cover-panel { font-size: 13px; color: #b0a888; letter-spacing: .04em; margin-bottom: 8px; }
+  .cover-agents { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .cover-agent { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #a09888; }
+  .agent-color-badge { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cover-meta { margin-top: 48px; font-size: 10px; color: #6a5a48; letter-spacing: .1em;
+                border-top: 1px solid rgba(196,152,58,.2); padding-top: 16px; }
+
+  /* ── Section ── */
+  section { padding: 44px 0 28px; page-break-inside: avoid; }
+  section + section { border-top: 1px solid #e8dcc8; }
+  .section-num { font-size: 9px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase;
+                 color: #c4983a; margin-bottom: 6px; }
+  h2 { font-size: 20px; font-weight: 400; color: #1a1208; margin-bottom: 20px;
+       font-style: italic; line-height: 1.3; }
+  h3 { font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+       color: #8a7a60; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #e8dcc8; }
+
+  /* ── TOC ── */
+  .toc { list-style: none; padding: 0; }
+  .toc li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0;
+            font-size: 13px; border-bottom: 1px dotted #d8ccbc; }
+  .toc .toc-num { font-weight: 700; color: #c4983a; min-width: 20px; }
+  .toc .toc-title { flex: 1; }
+
+  /* ── Summary table ── */
+  .summary-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .summary-table td { padding: 7px 12px; font-size: 12.5px; border-bottom: 1px solid #ede5d8; vertical-align: top; }
+  .summary-table td:first-child { font-weight: 600; color: #8a7a60; width: 38%; font-size: 11px;
+                                   letter-spacing: .05em; text-transform: uppercase; }
+
+  /* ── Consensus ── */
+  .consensus-box {
+    background: linear-gradient(135deg, #faf6ef 0%, #f5ede0 100%);
+    border-left: 4px solid #c4983a; border-radius: 4px;
+    padding: 24px 28px; margin: 16px 0;
+    font-size: 16px; line-height: 1.8; font-style: italic; color: #1a1208;
+  }
+  .confidence-bar-wrap { margin-top: 14px; }
+  .confidence-label { font-size: 10px; font-weight: 700; letter-spacing: .12em;
+                      text-transform: uppercase; color: #8a7a60; margin-bottom: 5px; }
+  .confidence-bar { height: 6px; background: #e8dcc8; border-radius: 3px; overflow: hidden; }
+  .confidence-fill { height: 100%; background: linear-gradient(90deg, #c4983a, #e0b84a); border-radius: 3px; }
+
+  /* ── Transcript ── */
+  .round-block { margin-bottom: 24px; page-break-inside: avoid; }
+  .round-label-pdf { font-size: 9px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+                     color: #c4983a; margin: 20px 0 10px; display: flex; align-items: center; gap: 10px; }
+  .round-label-pdf::before, .round-label-pdf::after {
+    content: ''; flex: 1; height: 1px; background: linear-gradient(to right, #e0d0c0, transparent);
+  }
+  .round-label-pdf::before { background: linear-gradient(to right, transparent, #e0d0c0); }
+  .agent-entry { margin-bottom: 14px; page-break-inside: avoid; }
+  .agent-entry-header { padding: 8px 14px; background: #f8f4ed; border-left: 3px solid;
+                        border-radius: 3px 3px 0 0; }
+  .agent-entry-name { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+                      color: #6a5a40; }
+  .agent-entry-body { padding: 12px 14px 14px; background: #fdfaf5;
+                      border: 1px solid #e8dcc8; border-top: none; border-radius: 0 0 3px 3px;
+                      font-size: 13px; line-height: 1.75; }
+
+  /* ── Graph ── */
+  .graph-container { text-align: center; margin-top: 16px; }
+  .graph-container img { max-width: 100%; border: 1px solid #e0d0c0; border-radius: 6px;
+                          box-shadow: 0 2px 16px rgba(0,0,0,.08); }
+  .graph-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; }
+  .legend-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6a5a40; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .type-badge { font-size: 9.5px; padding: 1px 7px; background: #f0e8d8; border: 1px solid #d8c8b0;
+                border-radius: 3px; color: #6a5a40; }
+
+  /* ── Guide ── */
+  .guide-list { list-style: none; padding: 0; counter-reset: guide; }
+  .guide-list li { counter-increment: guide; display: flex; gap: 14px; margin-bottom: 14px;
+                   page-break-inside: avoid; }
+  .guide-list li::before { content: counter(guide); font-size: 18px; font-weight: 700;
+                            color: #c4983a; opacity: .7; line-height: 1.3; min-width: 22px; }
+  .guide-item-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; color: #1a1208; }
+  .guide-item-text  { font-size: 12.5px; color: #5a4a30; line-height: 1.65; }
+
+  /* ── Footer ── */
+  .page-footer { margin-top: 44px; padding-top: 14px; border-top: 1px solid #e8dcc8;
+                 font-size: 9.5px; color: #b0a090; letter-spacing: .06em;
+                 display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+${watermarkEl}
+
+<!-- ── Portada ── -->
+<div class="cover">
+  <div>
+    <div class="cover-logo">CONSEJO &nbsp;·&nbsp; Sistema de Deliberación Multi-Agente</div>
+    <div class="cover-topic">${_escHtmlPDF(topic)}</div>
+    <div class="cover-panel">${_escHtmlPDF(panelName)} &nbsp;·&nbsp; ${_escHtmlPDF(MODE_LABELS_PDF[mode] || mode)}</div>
+    <div class="cover-agents">
+      ${agents.map(a => `
+        <div class="cover-agent">
+          <div class="agent-color-badge" style="background:${a.color}"></div>
+          ${_escHtmlPDF(a.emoji||'')} ${_escHtmlPDF(a.name)}
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="cover-meta">
+    ${_escHtmlPDF(dateStr)} &nbsp;·&nbsp; ${timeStr} &nbsp;·&nbsp; ${roundCount} rondas
+    &nbsp;·&nbsp; Proyecto ARCA
+  </div>
+</div>
+
+<!-- ── Índice ── -->
+<section>
+  <div class="section-num">Índice</div>
+  <h2>Contenido del documento</h2>
+  <ol class="toc">
+    <li><span class="toc-num">1</span><span class="toc-title">Resumen ejecutivo</span></li>
+    <li><span class="toc-num">2</span><span class="toc-title">Transcripción del debate (${roundCount} rondas)</span></li>
+    <li><span class="toc-num">3</span><span class="toc-title">Conclusión y consenso</span></li>
+    ${graphImg ? '<li><span class="toc-num">4</span><span class="toc-title">Red de conocimiento</span></li>' : ''}
+    <li><span class="toc-num">${graphImg ? 5 : 4}</span><span class="toc-title">Guía de aplicación práctica</span></li>
+  </ol>
+</section>
+
+<!-- ── 1. Resumen ejecutivo ── -->
+<section>
+  <div class="section-num">01 &nbsp;·&nbsp; Resumen ejecutivo</div>
+  <h2>Vista general de la deliberación</h2>
+  <table class="summary-table">
+    <tr><td>Tema</td><td>${_escHtmlPDF(topic)}</td></tr>
+    <tr><td>Panel</td><td>${_escHtmlPDF(panelName)}</td></tr>
+    <tr><td>Modo</td><td>${_escHtmlPDF(MODE_LABELS_PDF[mode] || mode)}</td></tr>
+    <tr><td>Participantes</td><td>${agents.map(a => `${a.emoji||''} ${a.name}`).map(_escHtmlPDF).join(' &nbsp;·&nbsp; ')}</td></tr>
+    <tr><td>Rondas</td><td>${roundCount}</td></tr>
+    <tr><td>Fecha</td><td>${_escHtmlPDF(dateStr)}</td></tr>
+    <tr><td>Resultado</td><td style="color:#8a5a20;font-weight:600">✓ Consenso alcanzado</td></tr>
+  </table>
+</section>
+
+<!-- ── 2. Transcripción ── -->
+<section style="page-break-before:always">
+  <div class="section-num">02 &nbsp;·&nbsp; Transcripción</div>
+  <h2>Debate por rondas</h2>
+  ${transcriptHtml || '<p style="color:#8a7a60;font-style:italic">Sin transcripción disponible.</p>'}
+</section>
+
+<!-- ── 3. Consenso ── -->
+<section style="page-break-before:always">
+  <div class="section-num">03 &nbsp;·&nbsp; Conclusión</div>
+  <h2>Consenso alcanzado</h2>
+  <div class="consensus-box">${_escHtmlPDF(consensusText)}</div>
+  <div class="confidence-bar-wrap">
+    <div class="confidence-label">Nivel de convergencia</div>
+    <div class="confidence-bar">
+      <div class="confidence-fill" style="width:78%"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 4. Red de conocimiento ── -->
+${graphImg ? `
+<section style="page-break-before:always">
+  <div class="section-num">04 &nbsp;·&nbsp; Red de conocimiento</div>
+  <h2>Mapa conceptual del debate</h2>
+  <p style="font-size:12.5px;color:#6a5a40;margin-bottom:14px;font-style:italic">
+    Representación visual de los conceptos, posiciones y relaciones emergidas durante la deliberación.
+    Cada nodo corresponde a una idea clave; las aristas indican la relación lógica entre ellas.
+  </p>
+  <div class="graph-container">
+    <img src="${graphImg}" alt="Red de conocimiento del debate">
+  </div>
+  <h3 style="margin-top:20px">Leyenda</h3>
+  <div style="display:flex;gap:40px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:10px;font-weight:700;color:#8a7a60;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Agentes</div>
+      <div class="graph-legend">${agentLegendHtml}</div>
+    </div>
+    <div>
+      <div style="font-size:10px;font-weight:700;color:#8a7a60;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Tipos de nodo</div>
+      <div class="graph-legend">${nodeTypeLegendHtml}</div>
+    </div>
+  </div>
+</section>` : ''}
+
+<!-- ── 5. Guía de aplicación ── -->
+<section style="page-break-before:always">
+  <div class="section-num">0${graphImg ? 5 : 4} &nbsp;·&nbsp; Aplicación práctica</div>
+  <h2>Cómo usar estas conclusiones</h2>
+  <p style="font-size:12.5px;color:#6a5a40;margin-bottom:20px;font-style:italic">
+    Guía operativa para traducir el consenso del debate en acciones concretas.
+  </p>
+  <ol class="guide-list">
+    ${guidePoints.map(p => `
+      <li>
+        <div>
+          <div class="guide-item-title">${_escHtmlPDF(p.title)}</div>
+          <div class="guide-item-text">${_escHtmlPDF(p.text)}</div>
+        </div>
+      </li>`).join('')}
+  </ol>
+</section>
+
+<div class="page-footer">
+  <span>CONSEJO &nbsp;·&nbsp; Proyecto ARCA</span>
+  <span>${_escHtmlPDF(topic.slice(0, 60))}${topic.length > 60 ? '…' : ''}</span>
+  <span>${_escHtmlPDF(dateStr)}</span>
+</div>
+
+</body>
+</html>`;
+
+    // Enviar al servidor para guardar y abrir en el navegador del sistema
+    try {
+      const r = await fetch('/api/export-html', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html }),
+      });
+      const d = await r.json();
+      if (d.url) {
+        if (typeof pywebview !== 'undefined') {
+          // Abrir en Safari/Chrome via API nativa
+          await pywebview.api.open_url_in_browser(d.url);
+        } else {
+          // Fallback para desarrollo en navegador
+          window.open(d.url, '_blank');
+        }
+      }
+    } catch(e) {
+      // Fallback: descarga directa
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'consejo_export.html';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  }
+
+  // Llamado desde el menú nativo "Exportar PDF…"
+  function triggerExportPDF() {
+    // Busca la conclusión más reciente en el debate
+    const area = document.getElementById('debate-area');
+    if (!area) return;
+    const consensusEl = area.querySelector('.consensus-text');
+    const text = consensusEl ? consensusEl.textContent : '(Sin consenso en esta sesión)';
+    exportPDF(text);
+  }
+
+  const MODE_LABELS_PDF = { debate:'Debate dialéctico', oracle:'Oráculo', review:'Revisión crítica',
+                             brainstorm:'Tormenta de ideas', synthesis:'Síntesis' };
+
+  function _escHtmlPDF(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+  }
+
+  async function _fetchLogoB64() {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth; c.height = img.naturalHeight;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve(c.toDataURL('image/png'));
+        } catch(e) { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/assets/logo.png?' + Date.now();
+    });
+  }
+
+  function _generateGuidePoints(consensusText, agents) {
+    const agentNames = agents.map(a => a.name).join(', ');
+    return [
+      {
+        title: 'Validar con evidencia empírica',
+        text: `Las conclusiones emergidas en el debate sobre "${(consensusText || '').slice(0, 80)}…" deben ser contrastadas con datos reales antes de su implementación. Identifica las métricas o fuentes relevantes para cada punto del consenso.`,
+      },
+      {
+        title: 'Priorizar según impacto y viabilidad',
+        text: `Evalúa cada recomendación del consenso usando una matriz de impacto vs. esfuerzo. Asigna responsables para las acciones de alto impacto y bajo esfuerzo como primer paso.`,
+      },
+      {
+        title: 'Incorporar perspectivas divergentes',
+        text: `Los agentes ${agentNames} aportaron perspectivas distintas. Las tensiones no resueltas (posiciones en contradicción en el grafo) son áreas que requieren análisis adicional antes de decidir.`,
+      },
+      {
+        title: 'Iterar y refinar',
+        text: `Este debate es un punto de partida. Programa una revisión en 2–4 semanas para evaluar si las acciones tomadas alinean con el consenso o si se requiere convocar un nuevo consejo con nueva información.`,
+      },
+      {
+        title: 'Documentar y compartir',
+        text: `Distribuye este informe a los stakeholders relevantes. La red de conocimiento en la sección anterior puede usarse como mapa de referencia para futuras decisiones relacionadas con este tema.`,
+      },
+    ];
+  }
+
+  // ── Resizable sidebar handles ─────────────────────────────────────────
+  function initResizableHandles() {
+    // Left sidebar
+    const sidebarHandle = document.getElementById('resize-sidebar');
+    const sidebarEl     = document.getElementById('sidebar');
+    if (sidebarHandle && sidebarEl) {
+      let startX, startW;
+      sidebarHandle.addEventListener('mousedown', e => {
+        startX = e.clientX;
+        startW = sidebarEl.offsetWidth;
+        sidebarHandle.classList.add('active');
+        document.body.style.userSelect = 'none';
+        const onMove = ev => {
+          const w = Math.max(180, Math.min(500, startW + ev.clientX - startX));
+          sidebarEl.style.width = w + 'px';
+          sidebarEl.style.minWidth = w + 'px';
+        };
+        const onUp = () => {
+          sidebarHandle.classList.remove('active');
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+      });
+    }
+
+    // Right graph panel (drag moves its left edge)
+    const graphHandle = document.getElementById('resize-graph');
+    const graphEl     = document.getElementById('graph-panel');
+    if (graphHandle && graphEl) {
+      let startX, startW;
+      graphHandle.addEventListener('mousedown', e => {
+        startX = e.clientX;
+        startW = graphEl.offsetWidth;
+        graphHandle.classList.add('active');
+        document.body.style.userSelect = 'none';
+        const onMove = ev => {
+          // Moving cursor left makes panel wider
+          const w = Math.max(220, Math.min(800, startW + (startX - ev.clientX)));
+          graphEl.style.width = w + 'px';
+          graphEl.style.minWidth = w + 'px';
+          if (graph) graph.resize();
+        };
+        const onUp = () => {
+          graphHandle.classList.remove('active');
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+      });
+    }
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────
+  function showSearch() { openModal('search-modal'); searchSessions(); }
+
+  async function searchSessions() {
+    const query = document.getElementById('search-input').value.toLowerCase().trim();
+    const el = document.getElementById('search-results');
+    const sessions = state.allSessions;
+    const filtered = query
+      ? sessions.filter(s =>
+          s.topic.toLowerCase().includes(query) ||
+          (s.panel||'').toLowerCase().includes(query)
+        )
+      : sessions;
+
+    if (!filtered.length) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px 0">Sin resultados.</div>';
+      return;
+    }
+    el.innerHTML = filtered.slice(0, 20).map(s => `
+      <div class="search-result-item" onclick="consejo.openSessionFromSearch('${s.path}')">
+        <div class="search-result-topic">${escHtml(s.topic)}</div>
+        <div class="search-result-meta">${s.panel || ''} · ${s.date || ''} ${s.consensus ? '· ✓ consenso' : ''}</div>
+      </div>
+    `).join('');
+  }
+
+  function openSessionFromSearch(path) {
+    closeModal('search-modal');
+    openSession(path);
+  }
+
+  // ── License ───────────────────────────────────────────────────────────
+  function showLicense() { openModal('license-modal'); }
+
+  // ── Modal helpers ─────────────────────────────────────────────────────
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  // Click outside to close modals
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // ── Escape key ────────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !state.running) {
+      startSession();
+    }
+  });
+
+  // ── Utils ─────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(s) {
+    return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────
+  return {
+    init, newSession, startSession, openSession,
+    saveSession, saveSessionAs,
+    showProperties, showPreferences, savePreferences, chooseVault,
+    showPermissions,
+    showPanelBuilder, addAgentToBuilder, removeAgentFromBuilder, savePanel,
+    toggleSidebar, toggleGraph, onPanelChange, selectPanel,
+    autoConfigureAgents,
+    showSearch, searchSessions, openSessionFromSearch,
+    showLicense,
+    openModal, closeModal,
+    newWorkspace,
+    exportPDF,
+    triggerExportPDF,
+    useTemplate,
+    chooseDocsFolder,
+    updateDocsStatus,
+    graphZoomIn:    () => { if (graph) graph.zoomIn(); },
+    graphZoomOut:   () => { if (graph) graph.zoomOut(); },
+    graphResetView: () => { if (graph) graph.resetView(); },
+  };
+})();
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  consejo.init().catch(err => {
+    document.getElementById('debate-area').innerHTML =
+      `<div style="padding:24px;color:#c4983a;font-family:monospace;font-size:12px">
+       <b>Error de inicio:</b> ${err.message}<br><pre style="margin-top:8px;color:#8a7e70">${err.stack}</pre></div>`;
+  });
+});
+</script>
+</body>
+</html>

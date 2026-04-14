@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# App data — personal / generated at runtime
+config.json
+sessions/
+exports/
+knowledge/
+consejo.log
+*.icns
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp

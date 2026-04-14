@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+duckduckgo-search
+ollama
+pywebview
+python-multipart
+pypdf
+httpx
+beautifulsoup4
+python-docx
