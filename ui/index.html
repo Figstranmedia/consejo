@@ -208,6 +208,74 @@
     flex-shrink: 0;
   }
   #topic-wrap { display: flex; gap: 10px; align-items: flex-start; }
+
+  /* ── Brief + context sources ─────────────────────────────────────────── */
+  #context-row {
+    display: flex; gap: 8px; padding: 8px 0 0; align-items: flex-start;
+  }
+  #brief-toggle {
+    background: none; border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text2); font-size: 11px; padding: 4px 9px; cursor: pointer;
+    font-family: var(--font-ui); letter-spacing: .05em; white-space: nowrap;
+    transition: all .15s; flex-shrink: 0;
+  }
+  #brief-toggle:hover { border-color: var(--gold); color: var(--gold); }
+  #brief-toggle.active { border-color: var(--gold); color: var(--gold); background: rgba(196,152,58,.07); }
+  #brief-area {
+    display: none; flex: 1;
+  }
+  #brief-area.visible { display: block; }
+  #brief-input {
+    width: 100%; resize: vertical; min-height: 62px; max-height: 180px;
+    font-size: 11.5px; line-height: 1.55; padding: 7px 10px;
+    font-family: var(--mono); color: var(--text);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  #brief-input:focus { border-color: var(--gold); outline: none; }
+  #sources-wrap {
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1;
+  }
+  .source-tag {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 3px; padding: 3px 8px 3px 9px; font-size: 10.5px;
+    color: var(--text2); max-width: 200px;
+  }
+  .source-tag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .source-tag-remove {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 12px; padding: 0; line-height: 1; flex-shrink: 0;
+  }
+  .source-tag-remove:hover { color: var(--terra); }
+  #add-source-btn {
+    background: none; border: 1px dashed var(--border); border-radius: 3px;
+    color: var(--text3); font-size: 10.5px; padding: 3px 9px; cursor: pointer;
+    font-family: var(--font-ui); transition: all .15s; white-space: nowrap;
+  }
+  #add-source-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── Convergence timeline ────────────────────────────────────────────── */
+  #convergence-wrap {
+    display: none; padding: 10px 24px 0; flex-shrink: 0;
+  }
+  #convergence-wrap.visible { display: block; }
+  #convergence-label {
+    font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 5px;
+  }
+  #convergence-track {
+    display: flex; align-items: flex-end; gap: 4px; height: 32px;
+  }
+  .conv-bar {
+    flex: 1; border-radius: 2px 2px 0 0; min-width: 18px; max-width: 40px;
+    transition: height .4s ease, background .4s;
+    position: relative;
+  }
+  .conv-bar-label {
+    position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
+    font-size: 8.5px; color: var(--text3); white-space: nowrap;
+  }
   #topic-input {
     flex: 1;
     resize: none;
@@ -1089,7 +1157,22 @@
             <button id="auto-agents-btn" onclick="consejo.autoConfigureAgents()" title="Sugerir agentes para este tema">✦ Sugerir panel</button>
           </div>
         </div>
+        <!-- Brief de contexto + fuentes adicionales -->
+        <div id="context-row">
+          <button id="brief-toggle" onclick="consejo.toggleBrief()" title="Añadir brief o notas de contexto que todos los agentes verán">+ Brief</button>
+          <div id="sources-wrap">
+            <button id="add-source-btn" onclick="consejo.addDocSource()" title="Añadir carpeta de documentos adicional">+ Carpeta</button>
+          </div>
+        </div>
+        <div id="brief-area">
+          <textarea id="brief-input" placeholder="Pega aquí un resumen del proyecto, CLAUDE.md, notas clave o cualquier contexto que los agentes deben conocer antes de debatir…"></textarea>
+        </div>
         <div id="agents-bar"></div>
+      </div>
+      <!-- Timeline de convergencia -->
+      <div id="convergence-wrap">
+        <div id="convergence-label">Convergencia por ronda</div>
+        <div id="convergence-track"></div>
       </div>
 
       <!-- Empty / Debate -->
@@ -1956,12 +2039,20 @@ window.consejo = (() => {
     const ws = new WebSocket(WS_URL);
     state.ws = ws;
 
+    // Reset convergence timeline
+    _convergenceData = [];
+    const cw = document.getElementById('convergence-wrap');
+    if (cw) { cw.classList.remove('visible'); document.getElementById('convergence-track').innerHTML = ''; }
+
     ws.onopen = () => {
+      const extraCtx = (document.getElementById('brief-input')?.value || '').trim();
       ws.send(JSON.stringify({
         topic,
         mode,
         model,
         panel: state.currentPanel,
+        extra_context:   extraCtx,
+        extra_doc_paths: _docSources.slice(),
       }));
     };
 
@@ -2100,7 +2191,11 @@ window.consejo = (() => {
       }
 
       case 'docs_loaded':
-        appendStatus(`📄 ${msg.count} documento${msg.count !== 1 ? 's' : ''} cargado${msg.count !== 1 ? 's' : ''}: ${(msg.names || []).join(', ')}`);
+        appendStatus(`📄 ${msg.count} documento${msg.count !== 1 ? 's' : ''} cargado${msg.count !== 1 ? 's' : ''}: ${(msg.names || []).slice(0,5).join(', ')}${msg.count > 5 ? '…' : ''}`);
+        break;
+
+      case 'brief_loaded':
+        appendStatus(`◈ Brief de contexto activo (${msg.chars} chars)`);
         break;
 
       case 'agent_thinking': {
@@ -2171,6 +2266,7 @@ window.consejo = (() => {
           graph.addEdges(msg.new_edges || []);
           updateGraphLegend();
         }
+        _addConvergencePoint(msg.round, msg.confidence ?? null);
         break;
       }
 
@@ -2181,10 +2277,13 @@ window.consejo = (() => {
           d.textContent = `◈ ${msg.reason}`;
           document.getElementById('debate-area').appendChild(d);
         }
+        // Feed convergence timeline (confidence from graph data or 0 placeholder)
+        _addConvergencePoint(msg.rounds_done || 0, null);
         break;
       }
 
       case 'consensus_reached': {
+        _addConvergencePoint(msg.round, msg.confidence);
         const conf = Math.round(msg.confidence * 100);
         const conclusion = msg.conclusion;
         const div = document.createElement('div');
@@ -2645,6 +2744,92 @@ window.consejo = (() => {
       `<div class="legend-item"><div class="legend-dot" style="background:${a.color}"></div>${a.name}</div>`
     ).join('');
     el.innerHTML = items + `<div class="legend-item"><div class="legend-dot" style="background:#c4983a"></div>Consenso</div>`;
+  }
+
+  // ── Brief de contexto libre ───────────────────────────────────────────
+  let _docSources = [];      // carpetas extra por sesión
+  let _convergenceData = []; // {round, confidence}
+
+  function toggleBrief() {
+    const area   = document.getElementById('brief-area');
+    const toggle = document.getElementById('brief-toggle');
+    const visible = area.classList.toggle('visible');
+    toggle.classList.toggle('active', visible);
+    if (visible) setTimeout(() => document.getElementById('brief-input')?.focus(), 50);
+  }
+
+  async function addDocSource() {
+    let folder = null;
+    try {
+      if (typeof pywebview !== 'undefined') {
+        folder = await pywebview.api.choose_folder();
+      }
+    } catch(e) {}
+    if (!folder) return;
+    if (_docSources.includes(folder)) return;
+    _docSources.push(folder);
+    _renderDocSources();
+  }
+
+  function _renderDocSources() {
+    const wrap = document.getElementById('sources-wrap');
+    if (!wrap) return;
+    // Keep the "+ Carpeta" button, rebuild tags
+    const btn = document.getElementById('add-source-btn');
+    wrap.innerHTML = '';
+    _docSources.forEach((src, i) => {
+      const tag = document.createElement('div');
+      tag.className = 'source-tag';
+      const name = src.split('/').pop() || src;
+      tag.innerHTML = `<span title="${src}">📁 ${name}</span>`;
+      const rm = document.createElement('button');
+      rm.className = 'source-tag-remove';
+      rm.textContent = '×';
+      rm.onclick = () => { _docSources.splice(i, 1); _renderDocSources(); };
+      tag.appendChild(rm);
+      wrap.appendChild(tag);
+    });
+    wrap.appendChild(btn);
+  }
+
+  // ── Convergence timeline ──────────────────────────────────────────────
+  function _addConvergencePoint(round, confidence) {
+    if (!round) return;
+    // Update or push
+    const existing = _convergenceData.findIndex(d => d.round === round);
+    if (existing >= 0) {
+      if (confidence !== null) _convergenceData[existing].confidence = confidence;
+    } else {
+      _convergenceData.push({ round, confidence: confidence ?? 0 });
+    }
+    _renderConvergence();
+  }
+
+  function _renderConvergence() {
+    if (_convergenceData.length === 0) return;
+    const wrap = document.getElementById('convergence-wrap');
+    const track = document.getElementById('convergence-track');
+    if (!wrap || !track) return;
+    wrap.classList.add('visible');
+    track.innerHTML = '';
+    const maxConf = Math.max(..._convergenceData.map(d => d.confidence), 0.15);
+    _convergenceData.forEach(d => {
+      const pct = Math.max(0.08, (d.confidence || 0) / Math.max(maxConf, 0.01));
+      const isLast = d.round === _convergenceData[_convergenceData.length - 1].round;
+      const barH = Math.round(pct * 28);
+      const color = d.confidence >= 0.75 ? 'var(--gold)'
+                  : d.confidence >= 0.4  ? 'var(--accent2)'
+                  :                        'var(--border2)';
+      const bar = document.createElement('div');
+      bar.className = 'conv-bar';
+      bar.style.cssText = `height:${barH}px;background:${color};${isLast ? 'outline:1px solid var(--gold)' : ''}`;
+      bar.title = `Ronda ${d.round}: ${Math.round((d.confidence||0)*100)}%`;
+      const lbl = document.createElement('span');
+      lbl.className = 'conv-bar-label';
+      lbl.textContent = `R${d.round}`;
+      bar.appendChild(lbl);
+      track.appendChild(bar);
+    });
   }
 
   // ── Auto-configure agents ─────────────────────────────────────────────
@@ -3256,6 +3441,7 @@ ${graphImg ? `
     showPanelBuilder, addAgentToBuilder, removeAgentFromBuilder, savePanel,
     toggleSidebar, toggleGraph, onPanelChange, selectPanel,
     autoConfigureAgents,
+    toggleBrief, addDocSource,
     showSearch, searchSessions, openSessionFromSearch,
     showLicense,
     openModal, closeModal,

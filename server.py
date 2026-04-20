@@ -434,6 +434,7 @@ async def mode_debate(ws: WebSocket, topic: str, agents: list[dict], cfg: dict) 
             "new_nodes": new_nodes,
             "new_edges": new_edges,
             "round": round_num,
+            "confidence": consensus.get("confidence", 0.0),
         })
 
         consensus = analysis.get("consensus", {})
@@ -739,26 +740,47 @@ async def ws_endpoint(ws: WebSocket):
         threshold      = cfg_data.get("debate", {}).get("consensus_threshold", 0.75)
 
         # ── Cargar documentos de contexto ──────────────────────────────
-        docs_path = cfg_data.get("docs", {}).get("path", "")
-        context_header = ""
+        docs_path       = cfg_data.get("docs", {}).get("path", "")
+        extra_doc_paths = data.get("extra_doc_paths", [])   # carpetas adicionales del cliente
+        extra_context   = (data.get("extra_context") or "").strip()  # brief libre del cliente
+        max_chars       = cfg_data.get("docs", {}).get("max_chars_per_doc", 4000)
+
+        # Reunir todas las fuentes de documentos
+        all_doc_paths = []
         if docs_path:
-            docs = load_documents_from_folder(docs_path)
-            if docs:
-                doc_names = [d["name"] for d in docs]
-                await ws.send_json({
-                    "type": "docs_loaded",
-                    "count": len(docs),
-                    "names": doc_names,
-                })
-                doc_blocks = "\n\n---\n\n".join(
-                    f"📄 {d['name']}\n{d['content']}" for d in docs
-                )
-                context_header = (
-                    "=== DOCUMENTOS DE CONTEXTO PARA ESTE DEBATE ===\n"
-                    "Tienes acceso a los siguientes documentos. Cítalos cuando sean relevantes usando [CITAR: nombre_del_doc].\n\n"
-                    + doc_blocks
-                    + "\n\n=== FIN DE DOCUMENTOS ==="
-                )
+            all_doc_paths.append(docs_path)
+        for ep in extra_doc_paths:
+            ep = ep.strip()
+            if ep and ep not in all_doc_paths:
+                all_doc_paths.append(ep)
+
+        context_header = ""
+        all_docs = []
+        for dp in all_doc_paths:
+            all_docs.extend(load_documents_from_folder(dp, max_chars))
+
+        if all_docs:
+            doc_names = [d["name"] for d in all_docs]
+            await ws.send_json({
+                "type": "docs_loaded",
+                "count": len(all_docs),
+                "names": doc_names,
+            })
+            doc_blocks = "\n\n---\n\n".join(
+                f"📄 {d['name']}\n{d['content']}" for d in all_docs
+            )
+            context_header = (
+                "=== DOCUMENTOS DE CONTEXTO PARA ESTE DEBATE ===\n"
+                "Tienes acceso a los siguientes documentos. Cítalos cuando sean relevantes.\n\n"
+                + doc_blocks
+                + "\n\n=== FIN DE DOCUMENTOS ==="
+            )
+
+        # Brief libre — se antepone al contexto de documentos
+        if extra_context:
+            brief_block = "=== BRIEF DEL DEBATE ===\n" + extra_context + "\n=== FIN DEL BRIEF ==="
+            context_header = brief_block + ("\n\n" + context_header if context_header else "")
+            await ws.send_json({"type": "brief_loaded", "chars": len(extra_context)})
 
         run_cfg = {
             "model": model,
