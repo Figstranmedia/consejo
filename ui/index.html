@@ -122,6 +122,16 @@
   }
   .sidebar-item:hover { background: var(--bg3); color: var(--text); }
   .sidebar-item.active { background: var(--bg3); color: var(--text); }
+  .session-delete-btn {
+    flex-shrink: 0; opacity: 0; background: none; border: none;
+    color: var(--text3); cursor: pointer; font-size: 12px; padding: 1px 4px;
+    border-radius: 3px; transition: opacity .12s, color .15s;
+  }
+  .sidebar-item:hover .session-delete-btn,
+  .search-result-item:hover .session-delete-btn { opacity: 1; }
+  .session-delete-btn:hover { color: var(--terra); background: rgba(181,96,58,.12); }
+  .search-result-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .search-result-item .search-result-main { flex: 1; min-width: 0; }
   .sidebar-item .dot {
     width: 8px; height: 8px;
     border-radius: 50%;
@@ -177,8 +187,9 @@
   }
   #topbar-toggle:hover { color: var(--text); }
 
-  #panel-select-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
+  #panel-select-wrap { display: flex; align-items: center; gap: 8px; }
   #panel-select-wrap label { font-size: 11px; color: var(--text2); white-space: nowrap; }
+  #topbar-status-group { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 
   select, input[type="text"], textarea {
     background: var(--bg3);
@@ -971,6 +982,8 @@
   }
   .template-item:hover { background: var(--bg3); color: var(--text); }
   .template-icon { flex-shrink: 0; font-size: 12px; }
+  #templates-list.collapsed { display: none; }
+  #templates-chevron.collapsed { transform: rotate(-90deg); }
 
   /* ── Export PDF button ───────────────────────────────────────────────── */
   .export-pdf-btn {
@@ -1070,9 +1083,10 @@
 
     <div class="sidebar-section">
       <button class="sidebar-new-btn" onclick="consejo.newSession()">+ Nueva sesión</button>
-      <button class="sidebar-new-btn" onclick="consejo.newWorkspace()"
-              style="margin-top:5px;background:rgba(78,98,114,.1);color:var(--accent2);border-color:rgba(78,98,114,.3)"
-              title="Reinicia el espacio sin eliminar sesiones guardadas">↺ Nuevo espacio</button>
+      <button onclick="consejo.newWorkspace()"
+              style="margin:6px 10px 0;width:calc(100% - 20px);background:none;border:none;color:var(--text3);font-size:10.5px;letter-spacing:.03em;text-transform:none;padding:3px;cursor:pointer;font-family:var(--font-ui);text-align:center"
+              onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--text3)'"
+              title="Reinicia el espacio sin eliminar sesiones guardadas">↺ Restablecer espacio de trabajo</button>
     </div>
 
     <!-- Paneles -->
@@ -1086,26 +1100,31 @@
 
     <!-- Plantillas -->
     <div class="sidebar-section" style="flex-shrink:0">
-      <div class="sidebar-label">Plantillas</div>
+      <div class="sidebar-label" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding-right:14px" onclick="consejo.toggleTemplates()">
+        <span>Plantillas</span>
+        <span id="templates-chevron" style="transition:transform .2s;font-size:9px">▾</span>
+      </div>
       <div id="templates-list"></div>
     </div>
 
     <!-- Sesiones recientes -->
-    <div class="sidebar-section" style="flex:1;overflow-y:auto;min-height:60px">
+    <div class="sidebar-section" style="flex:1;overflow-y:auto;min-height:140px">
       <div class="sidebar-label">Recientes</div>
       <div id="sessions-list"></div>
     </div>
 
-    <!-- Documentos de contexto — sección compacta al fondo -->
-    <div class="sidebar-section" style="flex-shrink:0;border-top:1px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 14px 4px">
-        <div class="sidebar-label" style="padding:0">Documentos</div>
+    <!-- Documentos de contexto — sección compacta al fondo, con alto acotado y scroll propio -->
+    <div class="sidebar-section" style="flex-shrink:0;border-top:1px solid var(--border);display:flex;flex-direction:column;max-height:210px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 14px 4px;flex-shrink:0">
+        <div class="sidebar-label" style="padding:0" title="Carpeta fija configurada en Preferencias — se usa en TODOS los debates. Para agregar una carpeta solo para un debate puntual, usa '+ Carpeta extra' al escribir el tema.">Documentos ⓘ</div>
         <div id="docs-status-sidebar" style="font-size:9.5px;color:var(--accent2)"></div>
       </div>
-      <div id="docs-list">
+      <input type="text" id="docs-filter" placeholder="Filtrar archivos…" oninput="consejo.filterDocsList()"
+             style="display:none;margin:0 10px 6px;width:calc(100% - 20px);font-size:11px;padding:4px 8px">
+      <div id="docs-list" style="overflow-y:auto;flex:1;min-height:0">
         <div class="docs-item">Sin carpeta configurada</div>
       </div>
-      <button class="docs-choose-btn" onclick="consejo.chooseDocsFolder()">📂 Elegir carpeta</button>
+      <button class="docs-choose-btn" style="flex-shrink:0" onclick="consejo.chooseDocsFolder()">📂 Elegir carpeta</button>
     </div>
   </div>
 
@@ -1140,10 +1159,12 @@
       <label style="font-size:11px;color:var(--text2)">Modelo</label>
       <select id="model-select"></select>
 
-      <div class="topbar-sep"></div>
-      <button id="graph-toggle-btn" class="topbar-icon-btn" onclick="consejo.toggleGraph()" title="Red de conocimiento">◈</button>
-      <div id="docs-status" style="font-size:11px;color:var(--text3)"></div>
-      <div id="obsidian-status" style="font-size:11px;color:var(--text3)"></div>
+      <div id="topbar-status-group">
+        <button id="search-toggle-btn" class="topbar-icon-btn" onclick="consejo.showSearch()" title="Buscar sesiones">🔍</button>
+        <button id="graph-toggle-btn" class="topbar-icon-btn" onclick="consejo.toggleGraph()" title="Red de conocimiento">◈</button>
+        <div id="docs-status" style="font-size:11px;color:var(--text3)"></div>
+        <div id="obsidian-status" style="font-size:11px;color:var(--text3)"></div>
+      </div>
     </div>
 
     <!-- Content -->
@@ -1161,7 +1182,7 @@
         <div id="context-row">
           <button id="brief-toggle" onclick="consejo.toggleBrief()" title="Añadir brief o notas de contexto que todos los agentes verán">+ Brief</button>
           <div id="sources-wrap">
-            <button id="add-source-btn" onclick="consejo.addDocSource()" title="Añadir carpeta de documentos adicional">+ Carpeta</button>
+            <button id="add-source-btn" onclick="consejo.addDocSource()" title="Carpeta adicional SOLO para este debate — no se guarda en Preferencias ni afecta otras sesiones. Para una carpeta permanente usa Preferencias o 'Elegir carpeta' en el sidebar.">+ Carpeta extra (solo esta sesión)</button>
           </div>
         </div>
         <div id="brief-area">
@@ -1846,6 +1867,7 @@ window.consejo = (() => {
     agentThinking: {},
     agentElements: {},
     allSessions:   [],
+    allDocs:       [],
   };
 
   // ── Init ─────────────────────────────────────────────────────────────
@@ -1857,6 +1879,7 @@ window.consejo = (() => {
     updateDocsStatus();
     onPanelChange();
     renderTemplates();
+    _initTemplatesState();
     // Init graph
     const canvas = document.getElementById('graph-canvas');
     graph = new KnowledgeGraph(canvas);
@@ -1901,6 +1924,19 @@ window.consejo = (() => {
     `).join('');
   }
 
+  const MONTHS_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function _formatSessionDate(raw) {
+    // Formato de origen: YYYYMMDD_HHMMSS
+    const m = /^(\d{4})(\d{2})(\d{2})_/.exec(raw || '');
+    if (!m) return '';
+    const [, , mo, d] = m;
+    return `${parseInt(d,10)} ${MONTHS_ES[parseInt(mo,10)-1] || ''}`;
+  }
+  function _panelColorByName(name) {
+    const p = state.panels.find(p => p.name === name);
+    return p?.agents?.[0]?.color || 'var(--text3)';
+  }
+
   function renderSidebarSessions(sessions) {
     const el = document.getElementById('sessions-list');
     if (!sessions.length) {
@@ -1908,9 +1944,11 @@ window.consejo = (() => {
       return;
     }
     el.innerHTML = sessions.map(s => `
-      <div class="sidebar-item" onclick="consejo.openSession('${s.path}')">
-        <span class="icon">${s.consensus ? '✓' : '·'}</span>
-        <span style="overflow:hidden;text-overflow:ellipsis">${s.topic.slice(0,35)}${s.topic.length>35?'…':''}</span>
+      <div class="sidebar-item" onclick="consejo.openSession('${s.path}')" title="${escHtml(s.topic)}">
+        <span class="dot" style="background:${_panelColorByName(s.panel)}" title="${escHtml(s.panel || '')}"></span>
+        <span style="overflow:hidden;text-overflow:ellipsis;flex:1">${escHtml(s.topic.slice(0,32))}${s.topic.length>32?'…':''}</span>
+        <span style="flex-shrink:0;font-size:10px;color:var(--text3);margin-left:4px">${s.consensus ? '✓' : ''} ${_formatSessionDate(s.date)}</span>
+        <button class="session-delete-btn" title="Borrar sesión" onclick="consejo.deleteSession('${s.path}', event)">✕</button>
       </div>
     `).join('');
   }
@@ -1924,17 +1962,28 @@ window.consejo = (() => {
   }
 
   function renderModelSelect() {
+    const noModels = !state.models.length;
     ['model-select','pref-model','pref-mediator-model'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       const current = el.value;
-      el.innerHTML = state.models.map(m => `<option value="${m}">${m}</option>`).join('');
+      el.innerHTML = noModels
+        ? `<option value="">Sin modelos — ¿Ollama corriendo?</option>`
+        : state.models.map(m => `<option value="${m}">${m}</option>`).join('');
       if (current) el.value = current;
     });
     // Set default from config
     const defModel = state.config?.models?.default || '';
     const sel = document.getElementById('model-select');
-    if (defModel && sel) sel.value = defModel;
+    if (defModel && sel && !noModels) sel.value = defModel;
+
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+      startBtn.disabled = noModels;
+      startBtn.title = noModels
+        ? 'No hay modelos de Ollama disponibles. Ejecuta "ollama serve" y descarga al menos un modelo (ej. "ollama pull gemma4:26b").'
+        : '';
+    }
   }
 
   function onPanelChange() {
@@ -2020,6 +2069,10 @@ window.consejo = (() => {
 
     const mode  = document.getElementById('mode-select').value;
     const model = document.getElementById('model-select').value;
+    if (!model) {
+      alert('No hay modelos de Ollama disponibles. Ejecuta "ollama serve" y descarga al menos un modelo (ej. "ollama pull gemma4:26b"), luego reinicia CONSEJO.');
+      return;
+    }
 
     state.running = true;
     state.agentTexts = {};
@@ -2556,12 +2609,37 @@ window.consejo = (() => {
   }
 
   // ── Docs status ───────────────────────────────────────────────────────
+  function _renderDocsItems(docs) {
+    if (!docs.length) {
+      return `<div class="docs-item" style="color:var(--text3)">Sin resultados</div>`;
+    }
+    return docs.map(doc => {
+      const icon = doc.name.endsWith('.pdf') ? '📄' : doc.name.endsWith('.docx') ? '📝' : '📃';
+      const slash = doc.name.lastIndexOf('/');
+      const folder = slash > -1 ? doc.name.slice(0, slash + 1) : '';
+      const fname  = slash > -1 ? doc.name.slice(slash + 1) : doc.name;
+      return `<div class="docs-item" title="${escHtml(doc.name)}">
+        <span class="doc-icon">${icon}</span>
+        <span style="overflow:hidden;text-overflow:ellipsis">${folder ? `<span style="color:var(--text3)">${escHtml(folder)}</span>` : ''}${escHtml(fname)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function filterDocsList() {
+    const q = (document.getElementById('docs-filter')?.value || '').trim().toLowerCase();
+    const listEl = document.getElementById('docs-list');
+    if (!listEl) return;
+    const docs = q ? state.allDocs.filter(d => d.name.toLowerCase().includes(q)) : state.allDocs;
+    listEl.innerHTML = _renderDocsItems(docs);
+  }
+
   async function updateDocsStatus() {
     const r = await fetch('/api/docs');
     const d = await r.json();
     const topbarEl  = document.getElementById('docs-status');
     const sidebarEl = document.getElementById('docs-status-sidebar');
     const listEl    = document.getElementById('docs-list');
+    const filterEl  = document.getElementById('docs-filter');
 
     const noContent = `<div class="docs-item">Sin carpeta configurada</div>`;
 
@@ -2569,23 +2647,23 @@ window.consejo = (() => {
       if (topbarEl)  topbarEl.innerHTML  = '';
       if (sidebarEl) sidebarEl.textContent = '';
       if (listEl)    listEl.innerHTML = noContent;
+      if (filterEl)  filterEl.style.display = 'none';
+      state.allDocs = [];
       return;
     }
 
-    const n = d.docs.length;
+    state.allDocs = d.docs;
+    const n = d.total ?? d.docs.length;
     const badge = `<span class="docs-badge">📄 ${n}</span>`;
     if (topbarEl)  topbarEl.innerHTML  = badge;
-    if (sidebarEl) sidebarEl.textContent = `${n} archivo${n !== 1 ? 's' : ''}`;
-
-    if (listEl) {
-      listEl.innerHTML = d.docs.map(doc => {
-        const icon = doc.name.endsWith('.pdf') ? '📄' : doc.name.endsWith('.docx') ? '📝' : '📃';
-        return `<div class="docs-item" title="${escHtml(doc.name)}">
-          <span class="doc-icon">${icon}</span>
-          <span style="overflow:hidden;text-overflow:ellipsis">${escHtml(doc.name)}</span>
-        </div>`;
-      }).join('');
+    if (sidebarEl) {
+      sidebarEl.textContent = `${n} archivo${n !== 1 ? 's' : ''}`;
+      sidebarEl.title = d.context_truncated
+        ? `El debate solo usa el contenido de los primeros ${d.context_limit} archivos (por orden alfabético).`
+        : '';
     }
+    if (filterEl) filterEl.style.display = n > 8 ? 'block' : 'none';
+    if (listEl) listEl.innerHTML = _renderDocsItems(d.docs);
   }
 
   // ── Permissions ───────────────────────────────────────────────────────
@@ -2884,6 +2962,26 @@ window.consejo = (() => {
         <span class="template-icon">${t.icon}</span>
         <span>${t.label}</span>
       </div>`).join('');
+  }
+
+  // ── Plantillas: colapsable (menos prioridad que Recientes/Documentos) ──
+  function toggleTemplates() {
+    const list    = document.getElementById('templates-list');
+    const chevron = document.getElementById('templates-chevron');
+    const collapsed = list.classList.toggle('collapsed');
+    chevron.classList.toggle('collapsed', collapsed);
+    try { localStorage.setItem('consejo_templates_collapsed', collapsed ? '1' : '0'); } catch(e) {}
+  }
+  function _initTemplatesState() {
+    let collapsed = true; // por defecto colapsado: es un acceso rápido, no navegación principal
+    try {
+      const saved = localStorage.getItem('consejo_templates_collapsed');
+      if (saved !== null) collapsed = saved === '1';
+    } catch(e) {}
+    if (collapsed) {
+      document.getElementById('templates-list')?.classList.add('collapsed');
+      document.getElementById('templates-chevron')?.classList.add('collapsed');
+    }
   }
 
   function useTemplate(idx) {
@@ -3385,8 +3483,11 @@ ${graphImg ? `
     }
     el.innerHTML = filtered.slice(0, 20).map(s => `
       <div class="search-result-item" onclick="consejo.openSessionFromSearch('${s.path}')">
-        <div class="search-result-topic">${escHtml(s.topic)}</div>
-        <div class="search-result-meta">${s.panel || ''} · ${s.date || ''} ${s.consensus ? '· ✓ consenso' : ''}</div>
+        <div class="search-result-main">
+          <div class="search-result-topic">${escHtml(s.topic)}</div>
+          <div class="search-result-meta">${s.panel || ''} · ${s.date || ''} ${s.consensus ? '· ✓ consenso' : ''}</div>
+        </div>
+        <button class="session-delete-btn" title="Borrar sesión" onclick="consejo.deleteSession('${s.path}', event)">✕</button>
       </div>
     `).join('');
   }
@@ -3394,6 +3495,23 @@ ${graphImg ? `
   function openSessionFromSearch(path) {
     closeModal('search-modal');
     openSession(path);
+  }
+
+  // ── Borrar sesión ─────────────────────────────────────────────────────
+  async function deleteSession(path, ev) {
+    if (ev) ev.stopPropagation();
+    const filename = path.includes('/') ? path.split('/').pop() : path;
+    const s = state.allSessions.find(s => s.path === path);
+    const label = s ? s.topic.slice(0, 60) : filename;
+    if (!confirm(`¿Borrar esta sesión?\n\n"${label}${label.length >= 60 ? '…' : ''}"\n\nNo se puede deshacer. (La nota exportada a Obsidian, si existe, no se toca.)`)) return;
+
+    const r = await fetch(`/api/sessions/${filename}`, { method: 'DELETE' });
+    const d = await r.json();
+    if (d.status !== 'ok') { alert('No se pudo borrar la sesión.'); return; }
+
+    state.allSessions = state.allSessions.filter(s => s.path !== path);
+    renderSidebarSessions(state.allSessions);
+    if (document.getElementById('search-modal').classList.contains('open')) searchSessions();
   }
 
   // ── License ───────────────────────────────────────────────────────────
@@ -3434,7 +3552,7 @@ ${graphImg ? `
 
   // ── Public API ────────────────────────────────────────────────────────
   return {
-    init, newSession, startSession, openSession,
+    init, newSession, startSession, openSession, deleteSession,
     saveSession, saveSessionAs,
     showProperties, showPreferences, savePreferences, chooseVault,
     showPermissions,
@@ -3449,8 +3567,10 @@ ${graphImg ? `
     exportPDF,
     triggerExportPDF,
     useTemplate,
+    toggleTemplates,
     chooseDocsFolder,
     updateDocsStatus,
+    filterDocsList,
     graphZoomIn:    () => { if (graph) graph.zoomIn(); },
     graphZoomOut:   () => { if (graph) graph.zoomOut(); },
     graphResetView: () => { if (graph) graph.resetView(); },

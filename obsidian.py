@@ -144,7 +144,7 @@ tags:
             aid = agent["id"]
             text = r.get("responses", {}).get(aid, "")
             if text:
-                rounds_md += f"**{agent['name']}** ({agent.get('emoji','·')})\n\n{text[:500]}{'…' if len(text) > 500 else ''}\n\n"
+                rounds_md += f"**{agent['name']}** ({agent.get('emoji','·')})\n\n{text}\n\n"
 
     # Documento completo
     content = f"""{frontmatter}

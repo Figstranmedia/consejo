@@ -57,18 +57,46 @@ PANELS_DIR.mkdir(exist_ok=True)
 
 # ─── Documentos de contexto ───────────────────────────────────────────────────
 
-def load_documents_from_folder(docs_path: str, max_chars: int = 4000) -> list:
-    """Lee PDFs, TXTs y MDs de una carpeta para inyectar como contexto."""
+SUPPORTED_DOC_EXTS = {'.pdf', '.txt', '.md', '.markdown', '.rst', '.docx'}
+
+
+def _iter_supported_files(root: Path):
+    """Recorre una carpeta (incluyendo subcarpetas) devolviendo archivos soportados,
+    ignorando carpetas/archivos ocultos. Orden estable: por ruta relativa."""
+    if not root.exists() or not root.is_dir():
+        return []
+    found = []
+    for f in root.rglob('*'):
+        if not f.is_file() or f.suffix.lower() not in SUPPORTED_DOC_EXTS:
+            continue
+        if any(part.startswith('.') for part in f.relative_to(root).parts):
+            continue
+        found.append(f)
+    found.sort(key=lambda f: str(f.relative_to(root)).lower())
+    return found
+
+
+def list_documents_from_folder(docs_path: str) -> dict:
+    """Lista ligera (sin leer contenido) de todos los documentos de una carpeta,
+    incluyendo subcarpetas. Usada para mostrar el listado completo en la UI."""
+    p = Path(docs_path).expanduser().resolve()
+    files = _iter_supported_files(p)
+    docs = [{
+        'name': str(f.relative_to(p)),
+        'size': f.stat().st_size,
+    } for f in files]
+    return {'docs': docs, 'total': len(docs)}
+
+
+def load_documents_from_folder(docs_path: str, max_chars: int = 4000, limit: int = 15) -> list:
+    """Lee PDFs, TXTs y MDs (incluyendo subcarpetas) para inyectar como contexto
+    de deliberación. Limitado a `limit` documentos para no saturar el prompt."""
     p = Path(docs_path).expanduser().resolve()
     if not p.exists() or not p.is_dir():
         return []
 
     docs = []
-    supported = {'.pdf', '.txt', '.md', '.markdown', '.rst', '.docx'}
-
-    for f in sorted(p.iterdir()):
-        if not f.is_file() or f.suffix.lower() not in supported:
-            continue
+    for f in _iter_supported_files(p):
         text = ''
         try:
             if f.suffix.lower() in ('.txt', '.md', '.markdown', '.rst'):
@@ -87,12 +115,12 @@ def load_documents_from_folder(docs_path: str, max_chars: int = 4000) -> list:
         text = text.strip()
         if text:
             docs.append({
-                'name': f.name,
+                'name': str(f.relative_to(p)),
                 'size': f.stat().st_size,
                 'content': text[:max_chars],
                 'truncated': len(text) > max_chars,
             })
-        if len(docs) >= 15:
+        if len(docs) >= limit:
             break
 
     return docs
@@ -204,6 +232,30 @@ def list_ollama_models() -> list[str]:
     except Exception:
         return []
 
+def extract_search_answer(query: str, results: list[dict], model: str) -> str:
+    """Destila resultados crudos de búsqueda web en el dato específico relevante
+    a la consulta, usando un modelo rápido (el mediador). Evita pegar snippets
+    crudos y ruidosos directo al contexto del debate."""
+    raw = "\n".join(f"- {r.get('title', '')}: {r.get('body', '')[:300]}" for r in results[:3] if r.get('body'))
+    if not raw.strip():
+        return ""
+    try:
+        result = ollama.chat(model=model, messages=[
+            {"role": "system", "content": (
+                "Extraes el dato específico relevante de resultados de búsqueda web. "
+                "Responde en español, máximo 2 frases, solo el hecho concreto encontrado, sin rodeos. "
+                "Si los resultados no contienen información útil para la consulta, responde exactamente: SIN_DATOS."
+            )},
+            {"role": "user", "content": f'Consulta: "{query}"\n\nResultados:\n{raw}'},
+        ])
+        text = (result["message"]["content"] or "").strip()
+        if not text or "SIN_DATOS" in text.upper():
+            return ""
+        return text
+    except Exception:
+        return ""
+
+
 # ─── Turno de agente ──────────────────────────────────────────────────────────
 
 async def run_agent_turn(
@@ -212,7 +264,9 @@ async def run_agent_turn(
     ws: WebSocket,
     model: str,
     context_header: str = "",
+    extractor_model: str = None,
 ) -> str:
+    extractor_model = extractor_model or model
     await ws.send_json({"type": "agent_start", "agent": agent["id"], "name": agent["name"]})
 
     # Modelo por agente tiene prioridad sobre el modelo global
@@ -259,8 +313,12 @@ async def run_agent_turn(
                 "results": [{"title": r.get("title", ""), "snippet": r.get("body", "")[:200]}
                             for r in results[:3]],
             })
-            snippets = "; ".join(r.get("body", "")[:180] for r in results[:2])
-            extra_context.append(f'[Búsqueda "{query}"]: {snippets}')
+            extracted = await asyncio.to_thread(extract_search_answer, query, results, extractor_model)
+            if extracted:
+                extra_context.append(f'[Búsqueda "{query}"]: {extracted}')
+            else:
+                snippets = "; ".join(r.get("body", "")[:180] for r in results[:2])
+                extra_context.append(f'[Búsqueda "{query}"]: {snippets}')
 
     if cite_urls:
         for url in cite_urls[:3]:
@@ -408,7 +466,7 @@ async def mode_debate(ws: WebSocket, topic: str, agents: list[dict], cfg: dict) 
                 )
 
             histories[agent["id"]].append({"role": "user", "content": user_msg})
-            response = await run_agent_turn(agent, histories[agent["id"]], ws, model, context)
+            response = await run_agent_turn(agent, histories[agent["id"]], ws, model, context, extractor_model=mediator)
             histories[agent["id"]].append({"role": "assistant", "content": response})
             round_responses[agent["id"]] = response
             all_responses[agent["id"]][round_num] = response
@@ -504,7 +562,7 @@ async def mode_oracle(ws: WebSocket, topic: str, agents: list[dict], cfg: dict) 
 
     for agent in agents:
         history = [{"role": "user", "content": f"Pregunta:\n{topic}\n\nResponde desde tu perspectiva experta."}]
-        text = await run_agent_turn(agent, history, ws, model, context)
+        text = await run_agent_turn(agent, history, ws, model, context, extractor_model=cfg.get("mediator_model", model))
         responses[agent["id"]] = text
 
     await ws.send_json({"type": "debate_end", "rounds": 1, "consensus": False, "mode": "oracle"})
@@ -527,7 +585,7 @@ async def mode_review(ws: WebSocket, topic: str, agents: list[dict], cfg: dict) 
                 f"Identifica fortalezas, debilidades y mejoras concretas.\n\n{topic}"
             )
         }]
-        text = await run_agent_turn(agent, history, ws, model, context)
+        text = await run_agent_turn(agent, history, ws, model, context, extractor_model=cfg.get("mediator_model", model))
         responses[agent["id"]] = text
 
     await ws.send_json({"type": "debate_end", "rounds": 1, "consensus": False, "mode": "review"})
@@ -551,7 +609,7 @@ async def mode_brainstorm(ws: WebSocket, topic: str, agents: list[dict], cfg: di
                 "Lista tus mejores ideas con explicación breve de cada una."
             )
         }]
-        text = await run_agent_turn(agent, history, ws, model, context)
+        text = await run_agent_turn(agent, history, ws, model, context, extractor_model=cfg.get("mediator_model", model))
         responses[agent["id"]] = text
 
     await ws.send_json({"type": "debate_end", "rounds": 1, "consensus": False, "mode": "brainstorm"})
@@ -661,6 +719,17 @@ async def api_session(filename: str):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@app.delete("/api/sessions/{filename}")
+async def api_delete_session(filename: str):
+    """Borra una sesión guardada localmente (no afecta la nota ya exportada a Obsidian)."""
+    safe_name = Path(filename).name  # evita path traversal
+    path = SESSIONS_DIR / safe_name
+    if not safe_name.endswith(".json") or not path.exists():
+        return {"status": "not_found"}
+    path.unlink()
+    return {"status": "ok"}
+
+
 @app.post("/api/auto-agents")
 async def api_auto_agents(data: dict):
     topic = data.get("topic", "").strip()
@@ -670,21 +739,27 @@ async def api_auto_agents(data: dict):
     return await auto_generate_agents(topic, model)
 
 
+DOCS_CONTEXT_LIMIT = 15
+
+
 @app.get("/api/docs")
 async def api_docs():
-    """Lista los documentos disponibles en la carpeta configurada."""
+    """Lista los documentos disponibles en la carpeta configurada (recursivo)."""
     docs_path = config.get("docs.path", "")
     if not docs_path:
         return {"configured": False, "docs": []}
     p = Path(docs_path).expanduser().resolve()
     if not p.exists():
         return {"configured": True, "exists": False, "docs": []}
-    docs = load_documents_from_folder(docs_path)
+    listing = list_documents_from_folder(docs_path)
     return {
         "configured": True,
         "exists": True,
         "path": str(p),
-        "docs": [{"name": d["name"], "size": d["size"], "truncated": d["truncated"]} for d in docs],
+        "docs": listing["docs"],
+        "total": listing["total"],
+        "context_limit": DOCS_CONTEXT_LIMIT,
+        "context_truncated": listing["total"] > DOCS_CONTEXT_LIMIT,
     }
 
 
