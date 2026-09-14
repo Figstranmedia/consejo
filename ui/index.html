@@ -862,7 +862,7 @@
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 28px;
-    background: linear-gradient(transparent, #130d0a);
+    background: linear-gradient(transparent, var(--bg3));
     pointer-events: none;
   }
   .card-footer {
@@ -1161,6 +1161,7 @@
 
       <div id="topbar-status-group">
         <button id="search-toggle-btn" class="topbar-icon-btn" onclick="consejo.showSearch()" title="Buscar sesiones">🔍</button>
+        <button id="expand-all-btn" class="topbar-icon-btn" onclick="consejo.toggleExpandAll()" title="Expandir automáticamente las respuestas de los agentes">⤢</button>
         <button id="graph-toggle-btn" class="topbar-icon-btn" onclick="consejo.toggleGraph()" title="Red de conocimiento">◈</button>
         <div id="docs-status" style="font-size:11px;color:var(--text3)"></div>
         <div id="obsidian-status" style="font-size:11px;color:var(--text3)"></div>
@@ -1868,6 +1869,7 @@ window.consejo = (() => {
     agentElements: {},
     allSessions:   [],
     allDocs:       [],
+    autoExpand:    true,
   };
 
   // ── Init ─────────────────────────────────────────────────────────────
@@ -1880,6 +1882,7 @@ window.consejo = (() => {
     onPanelChange();
     renderTemplates();
     _initTemplatesState();
+    _initExpandAllState();
     // Init graph
     const canvas = document.getElementById('graph-canvas');
     graph = new KnowledgeGraph(canvas);
@@ -2279,10 +2282,11 @@ window.consejo = (() => {
         footer.className = 'card-footer';
 
         if (text.length > 320) {
-          bodyEl.classList.add('truncated');
+          bodyEl.classList.add('expandable');
+          if (!state.autoExpand) bodyEl.classList.add('truncated');
           const expandBtn = document.createElement('button');
           expandBtn.className = 'card-btn';
-          expandBtn.textContent = 'Ver completo';
+          expandBtn.textContent = bodyEl.classList.contains('truncated') ? 'Ver completo' : 'Colapsar';
           expandBtn.onclick = e => {
             e.stopPropagation();
             bodyEl.classList.toggle('truncated');
@@ -2453,7 +2457,7 @@ window.consejo = (() => {
             <span class="agent-name">${agent.name}</span>
             <span class="expand-chevron">▾</span>
           </div>
-          <div class="agent-card-body ${text.length > 320 ? 'truncated' : ''}">${escHtml(text)}</div>`;
+          <div class="agent-card-body ${text.length > 320 ? 'expandable' : ''} ${text.length > 320 && !state.autoExpand ? 'truncated' : ''}">${escHtml(text)}</div>`;
         // Header click → collapse/expand
         card.querySelector('.agent-card-header').addEventListener('click', () => {
           card.classList.toggle('collapsed');
@@ -2466,8 +2470,8 @@ window.consejo = (() => {
           footer.className = 'card-footer';
           const expandBtn = document.createElement('button');
           expandBtn.className = 'card-btn';
-          expandBtn.textContent = 'Ver completo';
           const body = card.querySelector('.agent-card-body');
+          expandBtn.textContent = body.classList.contains('truncated') ? 'Ver completo' : 'Colapsar';
           expandBtn.onclick = e => {
             e.stopPropagation();
             body.classList.toggle('truncated');
@@ -2803,6 +2807,27 @@ window.consejo = (() => {
   function toggleSidebar() {
     state.sidebarOpen = !state.sidebarOpen;
     document.getElementById('sidebar').classList.toggle('collapsed', !state.sidebarOpen);
+  }
+
+  // ── Expandir todo: evita tener que hacer clic en "Ver completo" en cada
+  // tarjeta de cada ronda. Se recuerda entre sesiones (localStorage). ──────
+  function _initExpandAllState() {
+    try {
+      const saved = localStorage.getItem('consejo_auto_expand');
+      if (saved !== null) state.autoExpand = saved === '1';
+    } catch(e) {}
+    document.getElementById('expand-all-btn')?.classList.toggle('active', state.autoExpand);
+  }
+  function toggleExpandAll() {
+    state.autoExpand = !state.autoExpand;
+    try { localStorage.setItem('consejo_auto_expand', state.autoExpand ? '1' : '0'); } catch(e) {}
+    document.getElementById('expand-all-btn')?.classList.toggle('active', state.autoExpand);
+    // Aplica de inmediato a todas las tarjetas ya renderizadas
+    document.querySelectorAll('.agent-card-body.expandable').forEach(bodyEl => {
+      bodyEl.classList.toggle('truncated', !state.autoExpand);
+      const btn = bodyEl.closest('.agent-card')?.querySelector('.card-footer .card-btn');
+      if (btn) btn.textContent = bodyEl.classList.contains('truncated') ? 'Ver completo' : 'Colapsar';
+    });
   }
 
   // ── Graph panel ───────────────────────────────────────────────────────
@@ -3568,6 +3593,7 @@ ${graphImg ? `
     triggerExportPDF,
     useTemplate,
     toggleTemplates,
+    toggleExpandAll,
     chooseDocsFolder,
     updateDocsStatus,
     filterDocsList,

@@ -226,9 +226,19 @@ def do_search(query: str) -> list[dict]:
 # ─── Detección de modelos Ollama ──────────────────────────────────────────────
 
 def list_ollama_models() -> list[str]:
+    """Compatible con el objeto ListResponse (nuevo cliente ollama) y con dicts (versiones viejas)."""
     try:
         result = ollama.list()
-        return [m["name"] for m in result.get("models", [])]
+        models = result.get("models", [])
+        names = []
+        for m in models:
+            if isinstance(m, dict):
+                name = m.get("model") or m.get("name")
+            else:
+                name = getattr(m, "model", None) or getattr(m, "name", None)
+            if name:
+                names.append(name)
+        return names
     except Exception:
         return []
 
